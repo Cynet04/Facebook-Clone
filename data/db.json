@@ -101,5 +101,20 @@
       "likes": [],
       "createdAt": "2026-11-09T11:38:27.645Z"
     }
+  ],
+  "jobs": [
+    {
+      "id": "jb1",
+      "title": "Senior Developer (mock)",
+      "company": "Facebook Clone Inc.",
+      "location": "Remote",
+      "type": "Full-time",
+      "salary": "-",
+      "description": "Build the clone.",
+      "posterUserId": "u1",
+      "applications": [],
+      "savedBy": [],
+      "createdAt": "2026-11-09T11:41:58.555Z"
+    }
   ]
 }

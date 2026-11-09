@@ -686,6 +686,34 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Jobs stub (Phase 51) ----------
+app.get('/api/jobs', (req, res) => { const db = readDB(); res.json((db.jobs || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/jobs', writeLimit, (req, res) => {
+  const { userId, title, company, location, type, salary, description } = req.body || {};
+  if (!userId || !String(title||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const j = { id: uid('jb'), title: String(title).slice(0,120), company: String(company||'').slice(0,120), location: String(location||'').slice(0,120), type: String(type||'Full-time').slice(0,40), salary: String(salary||'').slice(0,60), description: String(description||'').slice(0,500), posterUserId: userId, applications: [], savedBy: [], createdAt: new Date().toISOString() };
+  db.jobs = db.jobs || []; db.jobs.push(j); writeDB(db); res.status(201).json(j);
+});
+app.post('/api/jobs/:id/apply', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const job = (db.jobs || []).find(x => x.id === req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  job.applications = job.applications || []; if (!job.applications.includes(userId)) job.applications.push(userId);
+  writeDB(db); res.json(job);
+});
+app.post('/api/jobs/:id/save', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const job = (db.jobs || []).find(x => x.id === req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  job.savedBy = job.savedBy || []; const i = job.savedBy.indexOf(userId); if (i >= 0) job.savedBy.splice(i,1); else job.savedBy.push(userId);
+  writeDB(db); res.json(job);
+});
+
 // ---------- Gaming stub (Phase 50) ----------
 app.get('/api/games', (req, res) => { const db = readDB(); res.json((db.games || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/games/:id/react', writeLimit, (req, res) => {

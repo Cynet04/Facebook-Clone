@@ -18,6 +18,7 @@
       pages: [],
       reels: [],
       games: [],
+      jobs: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -134,7 +135,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','gaming','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','gaming','jobs','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -149,6 +150,7 @@
     if (state.view === 'pages') renderPages();
     if (state.view === 'reels') renderReels();
     if (state.view === 'gaming') renderGaming();
+    if (state.view === 'jobs') renderJobs();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -449,6 +451,9 @@
   function renderGaming() {
     $('#gamingView').innerHTML = `<div class="card"><h2>Gaming</h2><p class="muted">Instant games stub (mock).</p></div>${(state.games||[]).map(g=>`<div class="card game-card"><div class="muted">${esc(userById(g.creatorUserId).name)}</div><div><strong>${esc(g.title||'Game')}</strong></div><div class="muted">${esc(g.plays||0)} plays · ${esc((g.likes||[]).length)} likes</div><iframe src="${esc(g.url||'about:blank')}" style="width:100%;height:320px;border:none;border-radius:8px;background:#000"></iframe><div class="row gap" style="margin-top:8px"><button class="btn small" data-game-like="${esc(g.id)}">👍 ${(g.likes||[]).length}</button><button class="btn small primary" data-game-play="${esc(g.id)}">Play</button></div></div>`).join('') || '<div class="card muted">No games yet.</div>'}`;
   }
+  function renderJobs() {
+    $('#jobsView').innerHTML = `<div class="card"><h2>Jobs</h2><p class="muted">Job listings stub (mock).</p></div>${(state.jobs||[]).map(j=>`<div class="card job-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(j.title||'Job')}</h3><div class="muted">${esc(j.company||'Company')} · ${esc(j.location||'Location')} · ${esc(j.type||'Full-time')}</div><div><button class="btn small primary" data-job-apply="${esc(j.id)}">Apply</button><button class="btn small" data-job-save="${esc(j.id)}">${(j.savedBy||[]).includes(state.user?.id)?'Saved':'Save'}</button></div></div><div class="muted">${esc(j.salary||'')} · ${esc(j.description||'').slice(0,120)}</div><div class="muted" style="margin-top:4px">Posted by ${esc(userById(j.posterUserId).name)} · ${(j.applications||[]).length} applicants · ${(j.savedBy||[]).length} saves</div></div>`).join('') || '<div class="card muted">No jobs yet.</div>'}`;
+  }
   function renderPages() {
     $('#pagesView').innerHTML = `
       <div class="card"><h2>Pages</h2><p class="muted">Mock pages (create + like/follow stub).</p>
@@ -588,6 +593,7 @@
     try { state.pages = await api('/api/pages'); } catch { state.pages = []; }
     try { state.reels = await api('/api/reels'); } catch { state.reels = []; }
     try { state.games = await api('/api/games'); } catch { state.games = []; }
+    try { state.jobs = await api('/api/jobs'); } catch { state.jobs = []; }
     try { state.games = await api('/api/games'); } catch { state.games = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
@@ -778,6 +784,16 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-job-apply]') && state.user) {
+      const id = e.target.closest('[data-job-apply]').dataset.jobApply;
+      await api(`/api/jobs/${id}/apply`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('job_apply'); await loadAux(); renderJobs(); return;
+    }
+    if (e.target.closest('[data-job-save]') && state.user) {
+      const id = e.target.closest('[data-job-save]').dataset.jobSave;
+      await api(`/api/jobs/${id}/save`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('job_save'); await loadAux(); renderJobs(); return;
+    }
     if (e.target.closest('[data-game-like]') && state.user) {
       const id = e.target.closest('[data-game-like]').dataset.gameLike;
       await api(`/api/games/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
