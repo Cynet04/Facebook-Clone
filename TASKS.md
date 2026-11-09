@@ -147,9 +147,16 @@
 - [x] Add mock resolve/dismiss actions
 - [x] Verify and commit
 
-## Phase 23+: Infinite
-- [ ] PWA/offline stub
+## Phase 23: PWA / Offline Stub
+- [ ] Add web manifest and basic icons metadata (SVG/data stubs)
+- [ ] Add service worker for shell caching (network-first fallback)
+- [ ] Register service worker in frontend
+- [ ] Add offline status indicator in UI
+- [ ] Verify and commit
+
+## Phase 24+: Infinite
 - [ ] Real-time transport mock improvements
 - [ ] User blocking/reporting mock expansion
 - [ ] Accessibility pass
+- [ ] Performance polish
 - [ ] ...continue indefinitely
