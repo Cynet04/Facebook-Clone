@@ -182,9 +182,16 @@
 - [x] Optimize polling/render guards for visible view only
 - [x] Verify and commit
 
-## Phase 28+: Infinite
-- [ ] i18n stub
+## Phase 28: i18n Stub (English/Spanish)
+- [ ] Add language selector in Settings
+- [ ] Persist language preference in localStorage
+- [ ] Add small translation map and apply to key UI labels/placeholders
+- [ ] Keep fallback/default English behavior
+- [ ] Verify and commit
+
+## Phase 29+: Infinite
 - [ ] E2E test scaffold
 - [ ] Data export/import mock
 - [ ] Developer/admin diagnostics panel
+- [ ] Analytics/events stub
 - [ ] ...continue indefinitely
