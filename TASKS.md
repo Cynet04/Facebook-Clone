@@ -183,11 +183,11 @@
 - [x] Verify and commit
 
 ## Phase 28: i18n Stub (English/Spanish)
-- [ ] Add language selector in Settings
-- [ ] Persist language preference in localStorage
-- [ ] Add small translation map and apply to key UI labels/placeholders
-- [ ] Keep fallback/default English behavior
-- [ ] Verify and commit
+- [x] Add language selector in Settings
+- [x] Persist language preference in localStorage
+- [x] Add small translation map and apply to key UI labels/placeholders
+- [x] Keep fallback/default English behavior
+- [x] Verify and commit
 
 ## Phase 29+: Infinite
 - [ ] E2E test scaffold

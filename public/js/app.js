@@ -3,7 +3,7 @@
     user: JSON.parse(localStorage.getItem('fb_user') || 'null'),
     token: localStorage.getItem('fb_token') || '',
     theme: localStorage.getItem('fb_theme') || 'light',
-    settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true,"isModerator":false}'),
+    settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true,"isModerator":false,"lang":"en"}'),
     users: [],
     posts: [],
     postsOffset: 0,
@@ -523,7 +523,8 @@
   $('#settingsForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const f = e.target;
-    saveSettings({ audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked, isModerator: f.isModerator.checked });
+    saveSettings({ lang: f.lang.value, audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked, isModerator: f.isModerator.checked });
+    applyI18n();
     $('#settingsMsg').textContent = 'Settings saved locally (mock).';
     renderProfile(); renderSettings();
   });
