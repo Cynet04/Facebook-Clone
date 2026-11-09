@@ -6,6 +6,10 @@
     settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true}'),
     users: [],
     posts: [],
+    postsOffset: 0,
+    postsLimit: 10,
+    postsTotal: 0,
+    postsLoading: false,
     stories: [],
     marketplace: [],
     notifications: [],
@@ -153,6 +157,17 @@
       </article>`;
   }
 
+  function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
+  function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
+  function renderSettings() {
+    const f = $('#settingsForm'); if (!f) return;
+    f.audience.value = state.settings.audience || 'public';
+    f.showEmail.checked = !!state.settings.showEmail;
+    f.allowRequests.checked = state.settings.allowRequests !== false;
+    f.storySharing.checked = state.settings.storySharing !== false;
+    $('#sessionInfo').innerHTML = state.user ? `<div><strong>${esc(state.user.name)}</strong></div><div class="muted">${esc(state.user.email)}</div><div class="muted">Theme: ${esc(state.theme)}</div><div class="muted">Audience label: ${esc(audienceLabel(state.settings.audience))}</div>` : '<div class="muted">Not signed in.</div>';
+  }
+
   function renderStories() {
     const rail = $('#storiesRail');
     if (!rail) return;
@@ -170,7 +185,11 @@
       container.innerHTML = `<div class="card muted">No posts yet. Be the first to post.</div>`;
       return;
     }
-    container.innerHTML = state.posts.map(p => postCard(p)).join('');
+    const hasMore = state.posts.length < (state.postsTotal || state.posts.length);
+    container.innerHTML = state.posts.map(p => postCard(p)).join('') + `
+      <div class="card row" style="justify-content:center">
+        ${hasMore ? `<button id="loadMorePosts" class="btn">${state.postsLoading ? 'Loading...' : 'Load more posts'}</button>` : `<span class="muted">No more posts</span>`}
+      </div>`;
   }
 
   function renderProfile() {
@@ -372,12 +391,12 @@
   // Auth/session
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault(); $('#authMsg').textContent = '';
-    try { const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) }); setSession(data.user, data.token); await loadFeed(); }
+    try { const data = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) }); setSession(data.user, data.token); await loadFeed(true); }
     catch (err) { $('#authMsg').textContent = err.message; }
   });
   $('#signupForm').addEventListener('submit', async (e) => {
     e.preventDefault(); $('#authMsg').textContent = '';
-    try { const data = await api('/api/auth/signup', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) }); setSession(data.user, data.token); await loadFeed(); }
+    try { const data = await api('/api/auth/signup', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) }); setSession(data.user, data.token); await loadFeed(true); }
     catch (err) { $('#authMsg').textContent = err.message; }
   });
   $('#logoutBtn').addEventListener('click', () => { $('#accountMenu').classList.add('hidden'); setSession(null, ''); });
@@ -406,7 +425,7 @@
     if (!content || !state.user) return;
     if (imageUrl && !/^https?:\/\//i.test(imageUrl)) { alert('Image URL must start with http(s)://'); return; }
     await api('/api/posts', { method: 'POST', body: JSON.stringify({ userId: state.user.id, content, imageUrl }) }).catch(e=>alert(e.message));
-    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed();
+    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed(true);
   });
 
   $('#globalSearch').addEventListener('keydown', (e) => {
@@ -439,6 +458,7 @@
   });
 
   document.addEventListener('click', async (e) => {
+    if (e.target.id === 'loadMorePosts') { await loadPosts(false); renderPosts(); return; }
     const reactBtn = e.target.closest('[data-react]');
     if (reactBtn && state.user) {
       await api(`/api/posts/${reactBtn.dataset.react}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactBtn.dataset.reaction || 'like' }) }).catch(()=>{});

@@ -105,9 +105,16 @@
 - [x] Add account/session info panel
 - [x] Verify and commit
 
-## Phase 17+: Infinite
-- [ ] Pagination/infinite scroll mock
+## Phase 17: Feed Pagination (Mock Infinite Scroll)
+- [x] Add paginated posts API (`limit`/`offset`)
+- [x] Add "Load more" / scroll-triggered loading in feed
+- [x] Preserve order and deduplicate loaded posts
+- [x] Keep search/profile rendering compatible
+- [x] Verify and commit
+
+## Phase 18+: Infinite
 - [ ] Admin/moderation stubs
 - [ ] PWA/offline stub
 - [ ] Comment replies/reactions
+- [ ] Post sharing/repost
 - [ ] ...continue indefinitely

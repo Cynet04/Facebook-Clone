@@ -99,7 +99,10 @@ app.post('/api/users/:id/save', (req, res) => {
 app.get('/api/posts', (req, res) => {
   const db = readDB();
   const posts = [...(db.posts || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(posts);
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0), 100);
+  const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+  if (!limit && !offset) return res.json(posts);
+  res.json({ items: posts.slice(offset, offset + limit), total: posts.length, offset, limit });
 });
 app.post('/api/posts', (req, res) => {
   const { userId, content, imageUrl } = req.body || {};
