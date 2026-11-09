@@ -461,6 +461,46 @@ app.post('/api/marketplace', (req, res) => {
   res.status(201).json(listing);
 });
 
+function sanitizeDB(input) {
+  const base = { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [], reports: [] };
+  if (!input || typeof input !== 'object') return null;
+  for (const k of Object.keys(base)) if (Array.isArray(input[k])) base[k] = input[k];
+  return base;
+}
+
+// Data export/import mock (Phase 30)
+app.get('/api/admin/export', (req, res) => {
+  const db = readDB();
+  const safe = JSON.parse(JSON.stringify(db));
+  (safe.users || []).forEach(u => { if (u.password) u.password = '***'; });
+  res.setHeader('Content-Disposition', 'attachment; filename="db-export.json"');
+  res.json({ exportedAt: new Date().toISOString(), db: safe, counts: Object.fromEntries(Object.entries(safe).map(([k,v]) => [k, Array.isArray(v)?v.length:0])) });
+});
+app.get('/api/admin/diagnostics', (req, res) => {
+  const db = readDB();
+  res.json({ time: new Date().toISOString(), counts: Object.fromEntries(Object.entries(db).map(([k,v]) => [k, Array.isArray(v)?v.length:0])) });
+});
+app.post('/api/admin/import', (req, res) => {
+  const { mode, db } = req.body || {};
+  if (!['merge','replace'].includes(mode) || !db) return res.status(400).json({ error: 'Invalid import payload' });
+  const incoming = sanitizeDB(db);
+  if (!incoming) return res.status(400).json({ error: 'Invalid DB shape' });
+  const size = Buffer.byteLength(JSON.stringify(incoming), 'utf8');
+  if (size > 2 * 1024 * 1024) return res.status(413).json({ error: 'Import too large' });
+  const current = readDB();
+  let next = incoming;
+  if (mode === 'merge') {
+    next = { ...current };
+    for (const k of Object.keys(incoming)) {
+      if (!Array.isArray(incoming[k])) continue;
+      const seen = new Set((next[k]||[]).map(x => x && x.id).filter(Boolean));
+      next[k] = [...(next[k]||[]), ...incoming[k].filter(x => !(x && x.id && seen.has(x.id)))];
+    }
+  }
+  writeDB(next);
+  res.json({ ok: true, mode, counts: Object.fromEntries(Object.entries(next).map(([k,v]) => [k, Array.isArray(v)?v.length:0])) });
+});
+
 // Moderation stubs (Phase 22)
 app.get('/api/reports', (req, res) => {
   const db = readDB();

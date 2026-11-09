@@ -210,6 +210,16 @@
               <p id="settingsMsg" class="muted"></p>
             </div>
             <div class="card"><h3>Account / Session</h3><div id="sessionInfo"></div></div>
+            <div class="card">
+              <h3>Data & Diagnostics (Mock)</h3>
+              <div class="row gap" style="flex-wrap:wrap">
+                <button id="exportDataBtn" class="btn small">Export JSON</button>
+                <select id="importMode"><option value="merge">Merge import</option><option value="replace">Replace import</option></select>
+                <input id="importFile" type="file" accept="application/json,.json" />
+                <button id="importDataBtn" class="btn small primary">Import</button>
+              </div>
+              <div id="diagnosticsPanel" class="muted" style="margin-top:8px"></div>
+            </div>
           </div>
 
           <div id="moderationView" class="hidden">

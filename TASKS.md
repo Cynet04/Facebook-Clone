@@ -197,11 +197,11 @@
 - [x] Verify and commit
 
 ## Phase 30: Data Export/Import Mock (JSON)
-- [ ] Add export endpoint/UI action to download DB snapshot (mock-safe fields)
-- [ ] Add import endpoint/UI action with validation/merge or replace option
-- [ ] Add basic safeguards (size/type checks, error messaging)
-- [ ] Add diagnostics panel entry showing DB counts
-- [ ] Verify and commit
+- [x] Add export endpoint/UI action to download DB snapshot (mock-safe fields)
+- [x] Add import endpoint/UI action with validation/merge or replace option
+- [x] Add basic safeguards (size/type checks, error messaging)
+- [x] Add diagnostics panel entry showing DB counts
+- [x] Verify and commit
 
 ## Phase 31+: Infinite
 - [ ] Developer/admin diagnostics panel

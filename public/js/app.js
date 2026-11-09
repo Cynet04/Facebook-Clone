@@ -216,6 +216,9 @@
 
   function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
   function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
+  async function renderDiagnostics() {
+    try { const d = await api('/api/admin/diagnostics'); $('#diagnosticsPanel').innerHTML = `<strong>DB counts:</strong> ${Object.entries(d.counts||{}).map(([k,v])=>`${k}=${v}`).join(' · ')}`; } catch { $('#diagnosticsPanel').textContent = 'Diagnostics unavailable.'; }
+  }
   function renderSettings() {
     const f = $('#settingsForm'); if (!f) return;
     f.audience.value = state.settings.audience || 'public';
@@ -516,6 +519,23 @@
     applyI18n();
     $('#settingsMsg').textContent = 'Settings saved locally (mock).';
     renderProfile(); renderSettings();
+  });
+
+  $('#exportDataBtn')?.addEventListener('click', async () => {
+    const data = await api('/api/admin/export').catch(err=>{ alert(err.message); return null; }); if (!data) return;
+    const blob = new Blob([JSON.stringify(data.db, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'facebook-clone-db.json'; a.click(); URL.revokeObjectURL(a.href);
+  });
+  $('#importDataBtn')?.addEventListener('click', async () => {
+    const file = $('#importFile')?.files?.[0]; if (!file) return alert('Choose a JSON file');
+    if (file.size > 2 * 1024 * 1024) return alert('File too large');
+    if (!/\.json$/i.test(file.name)) return alert('Use a .json file');
+    try {
+      const text = await file.text(); const db = JSON.parse(text);
+      const mode = $('#importMode').value || 'merge';
+      await api('/api/admin/import', { method:'POST', body: JSON.stringify({ mode, db: db.db || db }) });
+      alert('Import completed (mock). Reloading data.'); await loadFeed(true); renderDiagnostics();
+    } catch (e) { alert(e.message || 'Import failed'); }
   });
 
   $('#marketplaceForm')?.addEventListener('submit', async (e) => {
