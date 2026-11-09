@@ -127,11 +127,11 @@
 - [x] Verify and commit
 
 ## Phase 20: Post Editing & Deletion (MVP)
-- [ ] Add edit/delete post APIs with owner checks (mock)
-- [ ] Add post menu UI for owner actions
-- [ ] Support inline edit/save/cancel and delete confirm
-- [ ] Refresh feed/profile/search after mutations
-- [ ] Verify and commit
+- [x] Add edit/delete post APIs with owner checks (mock)
+- [x] Add post menu UI for owner actions
+- [x] Support inline edit/save/cancel and delete confirm
+- [x] Refresh feed/profile/search after mutations
+- [x] Verify and commit
 
 ## Phase 21+: Infinite
 - [ ] Admin/moderation stubs

@@ -116,6 +116,31 @@ app.post('/api/posts', (req, res) => {
   writeDB(db);
   res.status(201).json(post);
 });
+app.patch('/api/posts/:id', (req, res) => {
+  const { userId, content } = req.body || {};
+  if (!userId || !String(content || '').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const post = (db.posts || []).find(p => p.id === req.params.id);
+  if (!post) return res.status(404).json({ error: 'Not found' });
+  if (post.userId !== userId) return res.status(403).json({ error: 'Not allowed' });
+  post.content = String(content).slice(0, 5000);
+  post.editedAt = new Date().toISOString();
+  writeDB(db);
+  res.json(post);
+});
+app.delete('/api/posts/:id', (req, res) => {
+  const userId = req.body?.userId || req.query?.userId;
+  const db = readDB();
+  const idx = (db.posts || []).findIndex(p => p.id === req.params.id);
+  if (idx < 0) return res.status(404).json({ error: 'Not found' });
+  if (db.posts[idx].userId !== userId) return res.status(403).json({ error: 'Not allowed' });
+  db.posts.splice(idx, 1);
+  db.comments = (db.comments || []).filter(c => c.postId !== req.params.id);
+  (db.users || []).forEach(u => { if (Array.isArray(u.savedPosts)) u.savedPosts = u.savedPosts.filter(id => id !== req.params.id); });
+  writeDB(db);
+  res.json({ ok: true });
+});
+
 app.post('/api/posts/:id/share', (req, res) => {
   const { userId } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'Missing userId' });

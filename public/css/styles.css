@@ -101,6 +101,13 @@ hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
 .pill { background: var(--line); border-radius: 16px; padding: 6px 10px; font-size: 13px; font-weight: 600; }
 
 .post-head { display: flex; gap: 10px; align-items: center; }
+.post-head > div:nth-child(2) { flex: 1; min-width: 0; }
+.post-menu-wrap { position: relative; }
+.small-ghost { width: 32px; height: 32px; background: transparent; }
+.post-menu { position: absolute; right: 0; top: 36px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); min-width: 120px; z-index: 5; }
+.post-menu button { width: 100%; border: none; background: transparent; text-align: left; padding: 10px; cursor: pointer; }
+.post-menu button:hover { background: var(--input); }
+.post-edit textarea { width: 100%; min-height: 90px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--card); color: var(--text); resize: vertical; }
 .post-author { font-weight: 600; }
 .post-time { font-size: 12px; color: var(--muted); }
 .shared-note { font-size: 13px; margin-bottom: 4px; }

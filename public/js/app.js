@@ -160,11 +160,13 @@
           <span class="avatar-sm">${esc(initials(u.name))}</span>
           <div>
             <div class="post-author"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>
-            <div class="post-time">${esc(timeAgo(p.createdAt))}</div>
+            <div class="post-time">${esc(timeAgo(p.createdAt))}${p.editedAt ? ' · Edited' : ''}</div>
           </div>
+          ${p.userId === state.user?.id ? `<div class="post-menu-wrap"><button class="icon-btn small-ghost" data-post-menu="${esc(p.id)}">⋯</button><div class="post-menu hidden" id="post-menu-${esc(p.id)}"><button data-edit-post="${esc(p.id)}">Edit</button><button data-delete-post="${esc(p.id)}">Delete</button></div></div>` : ''}
         </div>
         ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
-        <div class="post-body">${esc(p.content)}</div>
+        <div class="post-body" id="post-body-${esc(p.id)}">${esc(p.content)}</div>
+        <form class="post-edit hidden stack" id="post-edit-${esc(p.id)}" data-edit-form="${esc(p.id)}"><textarea name="content" maxlength="5000">${esc(p.content)}</textarea><div class="row gap"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-post="${esc(p.id)}">Cancel</button></div></form>
         ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>
         <div class="post-actions">
@@ -490,6 +492,14 @@
 
   document.addEventListener('click', async (e) => {
     if (e.target.id === 'loadMorePosts') { await loadPosts(false); renderPosts(); return; }
+    if (e.target.closest('[data-post-menu]')) { const id = e.target.closest('[data-post-menu]').dataset.postMenu; $(`#post-menu-${id}`)?.classList.toggle('hidden'); return; }
+    if (!e.target.closest('.post-menu-wrap')) $$('.post-menu').forEach(m => m.classList.add('hidden'));
+    const editBtn = e.target.closest('[data-edit-post]');
+    if (editBtn) { $(`#post-body-${editBtn.dataset.editPost}`)?.classList.add('hidden'); $(`#post-edit-${editBtn.dataset.editPost}`)?.classList.remove('hidden'); $(`#post-menu-${editBtn.dataset.editPost}`)?.classList.add('hidden'); return; }
+    const cancelEdit = e.target.closest('[data-cancel-edit-post]');
+    if (cancelEdit) { $(`#post-body-${cancelEdit.dataset.cancelEditPost}`)?.classList.remove('hidden'); $(`#post-edit-${cancelEdit.dataset.cancelEditPost}`)?.classList.add('hidden'); return; }
+    const delBtn = e.target.closest('[data-delete-post]');
+    if (delBtn && state.user) { if (!confirm('Delete this post?')) return; await api(`/api/posts/${delBtn.dataset.deletePost}?userId=${encodeURIComponent(state.user.id)}`, { method:'DELETE' }).catch(err=>alert(err.message)); await loadFeed(true); return; }
     const reactBtn = e.target.closest('[data-react]');
     if (reactBtn && state.user) {
       await api(`/api/posts/${reactBtn.dataset.react}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactBtn.dataset.reaction || 'like' }) }).catch(()=>{});
@@ -535,6 +545,13 @@
   });
 
   document.addEventListener('submit', async (e) => {
+    const editPostForm = e.target.closest('[data-edit-form]');
+    if (editPostForm && state.user) {
+      e.preventDefault();
+      const content = new FormData(editPostForm).get('content');
+      await api(`/api/posts/${editPostForm.dataset.editForm}`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
+      await loadFeed(); return;
+    }
     const commentForm = e.target.closest('[data-comment-form]');
     if (commentForm && state.user) {
       e.preventDefault();
