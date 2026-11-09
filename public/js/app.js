@@ -630,6 +630,10 @@
   });
 
   renderAuth();
-  if (state.user) loadFeed().catch(()=>{});
-  setInterval(() => { if (state.user) loadAux().catch(()=>{}); }, 15000);
+  applyTheme();
+  if (state.user) loadFeed(true).catch(()=>{});
+  function updateOnline() { $('#offlineBadge')?.classList.toggle('hidden', navigator.onLine); renderStatus(); }
+  window.addEventListener('online', updateOnline); window.addEventListener('offline', updateOnline); updateOnline();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  setInterval(() => { if (!state.user || document.hidden || state._loadingFeed) return; loadAux().then(() => { state.lastUpdatedAt = new Date().toISOString(); if (['home','messenger','moderation'].includes(state.view)) renderView(); renderStatus(); }).catch(()=>{}); }, 15000);
 })();

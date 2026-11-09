@@ -161,9 +161,16 @@
 - [x] Add basic API error surface in UI status line
 - [x] Verify and commit
 
-## Phase 25+: Infinite
+## Phase 25: Accessibility Pass (MVP)
+- [ ] Add/verify ARIA labels, landmarks, and focus-visible styles
+- [ ] Improve keyboard navigation for menus, dialogs, and forms
+- [ ] Add skip link and better heading structure
+- [ ] Ensure color-contrast-safe status indicators in both themes
+- [ ] Verify and commit
+
+## Phase 26+: Infinite
 - [ ] User blocking/reporting mock expansion
-- [ ] Accessibility pass
 - [ ] Performance polish
 - [ ] i18n stub
+- [ ] E2E test scaffold
 - [ ] ...continue indefinitely
