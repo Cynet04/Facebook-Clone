@@ -294,9 +294,16 @@
 - [x] Track memory interactions via analytics
 - [x] Verify and commit
 
-## Phase 44+: Infinite
-- [ ] Events stub
+## Phase 44: Events Stub
+- [x] Add `/api/events` mock endpoints and `eventItems` data model (avoids analytics `events`)
+- [x] Add Events nav/view shell with create + RSVP mock actions
+- [x] Seed sample events and render upcoming events list
+- [x] Track event interactions via analytics
+- [x] Verify and commit
+
+## Phase 45+: Infinite
 - [ ] Birthdays stub
 - [ ] Fundraisers stub
 - [ ] Pages stub
+- [ ] Saved collections/folders
 - [ ] ...continue indefinitely

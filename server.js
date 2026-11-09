@@ -626,6 +626,25 @@ app.post('/api/reports/:id/resolve', (req, res) => {
   res.json(report);
 });
 
+// ---------- Events stub (Phase 44; eventItems avoids analytics db.events) ----------
+app.get('/api/events', (req, res) => { const db = readDB(); res.json((db.eventItems || []).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0))); });
+app.post('/api/events', writeLimit, (req, res) => {
+  const { userId, title, date, location, description } = req.body || {};
+  if (!userId || !String(title||'').trim() || !date) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const ev = { id: uid('se'), title: String(title).slice(0,120), date: new Date(date).toISOString(), location: String(location||'').slice(0,120), description: String(description||'').slice(0,500), hostUserId: userId, rsvps: [], createdAt: new Date().toISOString() };
+  db.eventItems = db.eventItems || []; db.eventItems.push(ev); writeDB(db); res.status(201).json(ev);
+});
+app.post('/api/events/:id/rsvp', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const ev = (db.eventItems || []).find(x => x.id === req.params.id);
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  ev.rsvps = ev.rsvps || []; const i = ev.rsvps.indexOf(userId); if (i >= 0) ev.rsvps.splice(i,1); else ev.rsvps.push(userId);
+  writeDB(db); res.json(ev);
+});
+
 // Analytics/events stub (Phase 32)
 app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};

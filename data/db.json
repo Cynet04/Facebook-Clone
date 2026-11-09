@@ -43,5 +43,17 @@
       "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
       "thumb": ""
     }
+  ],
+  "eventItems": [
+    {
+      "id": "evseed1",
+      "title": "Mock Community Meetup",
+      "date": "2026-11-12T10:48:43.880Z",
+      "location": "Online",
+      "hostUserId": "u1",
+      "description": "Sample upcoming event (mock).",
+      "rsvps": [],
+      "createdAt": "2026-11-09T10:48:43.895Z"
+    }
   ]
 }
