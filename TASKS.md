@@ -309,11 +309,11 @@
 - [x] Verify and commit
 
 ## Phase 46: Fundraisers Stub
-- [ ] Add `/api/fundraisers` mock endpoints and seed data
-- [ ] Add Fundraisers nav/view with create + donate mock actions
-- [ ] Show progress bars/goals and recent donations count
-- [ ] Track fundraiser interactions via analytics
-- [ ] Verify and commit
+- [x] Add `/api/fundraisers` mock endpoints and seed data
+- [x] Add Fundraisers nav/view with create + donate mock actions
+- [x] Show progress bars/goals and recent donations count
+- [x] Track fundraiser interactions via analytics
+- [x] Verify and commit
 
 ## Phase 47+: Infinite
 - [ ] Pages stub

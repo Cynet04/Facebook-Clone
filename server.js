@@ -645,6 +645,28 @@ app.post('/api/events/:id/rsvp', writeLimit, (req, res) => {
   writeDB(db); res.json(ev);
 });
 
+// ---------- Fundraisers stub (Phase 46) ----------
+app.get('/api/fundraisers', (req, res) => { const db = readDB(); res.json((db.fundraisers || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/fundraisers', writeLimit, (req, res) => {
+  const { userId, title, goal, description } = req.body || {};
+  if (!userId || !String(title||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const g = Math.max(1, Math.min(1000000, Number(goal)||100));
+  const db = readDB();
+  const fr = { id: uid('fr'), title: String(title).slice(0,120), goal: g, raised: 0, organizerUserId: userId, description: String(description||'').slice(0,500), donors: [], createdAt: new Date().toISOString() };
+  db.fundraisers = db.fundraisers || []; db.fundraisers.push(fr); writeDB(db); res.status(201).json(fr);
+});
+app.post('/api/fundraisers/:id/donate', writeLimit, (req, res) => {
+  const { userId, amount } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const amt = Math.max(1, Math.min(10000, Number(amount)||5));
+  const db = readDB();
+  const fr = (db.fundraisers || []).find(x => x.id === req.params.id);
+  if (!fr) return res.status(404).json({ error: 'Fundraiser not found' });
+  fr.raised = Number(fr.raised||0) + amt;
+  fr.donors = fr.donors || []; fr.donors.push({ userId, amount: amt, createdAt: new Date().toISOString() });
+  writeDB(db); res.json(fr);
+});
+
 // Analytics/events stub (Phase 32)
 app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};

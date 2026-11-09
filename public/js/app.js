@@ -14,6 +14,7 @@
     scheduledStories: [],
       videos: [],
       eventItems: [],
+      fundraisers: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -130,7 +131,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -141,6 +142,7 @@
     if (state.view === 'watch') renderWatch();
     if (state.view === 'events') renderEvents();
     if (state.view === 'birthdays') renderBirthdays();
+    if (state.view === 'fundraisers') renderFundraisers();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -435,6 +437,18 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
+  function renderFundraisers() {
+    $('#fundraisersView').innerHTML = `
+      <div class="card"><h2>Fundraisers</h2><p class="muted">Mock fundraisers (no real payments).</p>
+        <form id="fundraiserForm" class="stack">
+          <input name="title" placeholder="Fundraiser title" required maxlength="120" />
+          <input name="goal" type="number" min="1" max="1000000" value="100" placeholder="Goal" />
+          <textarea name="description" placeholder="Description" maxlength="500"></textarea>
+          <div><button class="btn primary small" type="submit">Create fundraiser</button></div>
+        </form>
+      </div>
+      ${(state.fundraisers||[]).map(fr => { const pct = fr.goal ? Math.min(100, Math.round((Number(fr.raised||0)/Number(fr.goal))*100)) : 0; return `<div class="card"><h3>${esc(fr.title)}</h3><div class="muted">Organizer: ${esc(userById(fr.organizerUserId).name)} · $${Number(fr.raised||0)} raised of $${Number(fr.goal||0)}</div><div style="height:10px;background:var(--input,#eee);border-radius:999px;overflow:hidden;margin:8px 0"><div style="height:100%;width:${pct}%;background:var(--blue,#1877f2)"></div></div><div>${esc(fr.description||'')}</div><div class="row gap" style="margin-top:8px"><button class="btn small primary" data-fundraiser-donate="${esc(fr.id)}" data-amount="5">Donate $5 (mock)</button><button class="btn small" data-fundraiser-donate="${esc(fr.id)}" data-amount="10">Donate $10</button><span class="muted">${(fr.donors||[]).length} donations</span></div></div>`; }).join('') || '<div class="card muted">No fundraisers yet.</div>'}`;
+  }
   function renderBirthdays() {
     const today = new Date();
     const list = (state.users||[]).filter(u => u.id !== state.user?.id && !blockedSet().has(u.id) && u.birthday).map(u => {
@@ -529,6 +543,7 @@
     try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
     try { state.videos = await api('/api/videos'); } catch { state.videos = []; }
     try { state.eventItems = await api('/api/events'); } catch { state.eventItems = []; }
+    try { state.fundraisers = await api('/api/fundraisers'); } catch { state.fundraisers = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
@@ -718,6 +733,11 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-fundraiser-donate]') && state.user) {
+      const b = e.target.closest('[data-fundraiser-donate]');
+      await api(`/api/fundraisers/${b.dataset.fundraiserDonate}/donate`, { method:'POST', body: JSON.stringify({ userId: state.user.id, amount: Number(b.dataset.amount||5) }) }).catch(err=>alert(err.message));
+      trackEvent('fundraiser_donate', { amount: Number(b.dataset.amount||5) }); await loadAux(); renderFundraisers(); return;
+    }
     if (e.target.closest('[data-birthday-wish]') && state.user) { const id = e.target.closest('[data-birthday-wish]').dataset.birthdayWish; await api('/api/notifications', { method:'POST', body: JSON.stringify({ userId: id, type:'birthday_wish', actorId: state.user.id, message:`${state.user.name} sent you birthday wishes (mock).` }) }).catch(()=>{}); trackEvent('birthday_wish',{targetId:id}); alert('Wish sent (mock).'); return; }
     if (e.target.closest('[data-event-rsvp]') && state.user) { const id = e.target.closest('[data-event-rsvp]').dataset.eventRsvp; await api(`/api/events/${id}/rsvp`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); trackEvent('event_rsvp'); await loadAux(); renderEvents(); return; }
     if (e.target.closest('[data-memory-open]')) { trackEvent('memory_open'); state.view='home'; renderView(); return; }
