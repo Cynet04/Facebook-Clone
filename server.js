@@ -569,6 +569,105 @@ app.post('/api/groups/:id/posts', (req, res) => {
   writeDB(db); res.status(201).json(post);
 });
 
+// Groups Enhancements (Phase 64)
+app.post('/api/groups/:id/polls', writeLimit, (req, res) => {
+  const { userId, question, options, expiresAt } = req.body || {};
+  if (!userId || !question || !Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'Missing/invalid fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId)) return res.status(403).json({ error: 'Must be member to create poll' });
+  const poll = { id: uid('gp'), groupId: group.id, userId, question: String(question).slice(0, 200), options: options.slice(0, 10).map(o => ({ id: uid('o'), text: String(o).slice(0, 100), votes: [] })), expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null, createdAt: new Date().toISOString() };
+  group.polls = group.polls || []; group.polls.push(poll);
+  writeDB(db); res.status(201).json(poll);
+});
+app.post('/api/groups/:id/polls/:pollId/vote', writeLimit, (req, res) => {
+  const { userId, optionId } = req.body || {};
+  if (!userId || !optionId) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  const poll = (group.polls || []).find(p => p.id === req.params.pollId);
+  if (!poll) return res.status(404).json({ error: 'Poll not found' });
+  if (poll.expiresAt && new Date(poll.expiresAt) < new Date()) return res.status(400).json({ error: 'Poll expired' });
+  poll.options.forEach(o => { const i = o.votes.indexOf(userId); if (i >= 0) o.votes.splice(i, 1); });
+  const opt = poll.options.find(o => o.id === optionId);
+  if (!opt) return res.status(404).json({ error: 'Option not found' });
+  opt.votes.push(userId);
+  writeDB(db); res.json(poll);
+});
+app.post('/api/groups/:id/announcements', writeLimit, (req, res) => {
+  const { userId, title, content, pinned } = req.body || {};
+  if (!userId || !title || !content) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId && (m.role === 'admin' || m.role === 'moderator'))) return res.status(403).json({ error: 'Only admins/moderators can create announcements' });
+  const ann = { id: uid('ga'), groupId: group.id, userId, title: String(title).slice(0, 120), content: String(content).slice(0, 2000), pinned: Boolean(pinned), createdAt: new Date().toISOString() };
+  group.announcements = group.announcements || []; group.announcements.push(ann);
+  writeDB(db); res.status(201).json(ann);
+});
+app.get('/api/groups/:id/announcements', (req, res) => {
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  res.json((group.announcements || []).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt)-new Date(a.createdAt)));
+});
+app.post('/api/groups/:id/moderate/ban', writeLimit, (req, res) => {
+  const { userId, targetUserId, reason } = req.body || {};
+  if (!userId || !targetUserId) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId && m.role === 'admin')) return res.status(403).json({ error: 'Only admins can ban' });
+  const member = group.members.find(m => m.id === targetUserId);
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+  if (member.role === 'admin') return res.status(403).json({ error: 'Cannot ban admin' });
+  group.members = group.members.filter(m => m.id !== targetUserId);
+  group.banned = group.banned || []; group.banned.push({ id: targetUserId, reason: String(reason||''), bannedBy: userId, bannedAt: new Date().toISOString() });
+  writeDB(db); res.json(group);
+});
+app.post('/api/groups/:id/moderate/mute', writeLimit, (req, res) => {
+  const { userId, targetUserId, durationHours } = req.body || {};
+  if (!userId || !targetUserId) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId && (m.role === 'admin' || m.role === 'moderator'))) return res.status(403).json({ error: 'Only admins/moderators can mute' });
+  const member = group.members.find(m => m.id === targetUserId);
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+  if (member.role === 'admin') return res.status(403).json({ error: 'Cannot mute admin' });
+  member.mutedUntil = durationHours ? new Date(Date.now() + durationHours * 3600000).toISOString() : null;
+  writeDB(db); res.json(group);
+});
+app.delete('/api/groups/:id/posts/:postId', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  const post = (group.posts || []).find(p => p.id === req.params.postId);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const actor = group.members.find(m => m.id === userId);
+  if (!actor || (actor.role !== 'admin' && actor.role !== 'moderator' && post.userId !== userId)) return res.status(403).json({ error: 'Not authorized to delete' });
+  group.posts = group.posts.filter(p => p.id !== req.params.postId);
+  writeDB(db); res.json({ ok: true });
+});
+app.get('/api/groups/:id/insights', (req, res) => {
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  const memberCount = group.members?.length || 0;
+  const postCount = group.posts?.length || 0;
+  const pollCount = group.polls?.length || 0;
+  const eventCount = group.events?.length || 0;
+  const adminCount = group.members?.filter(m => m.role === 'admin').length || 0;
+  const modCount = group.members?.filter(m => m.role === 'moderator').length || 0;
+  const bannedCount = group.banned?.length || 0;
+  const activeMembers = group.members?.filter(m => m.role !== 'banned').length || 0;
+  res.json({ memberCount, postCount, pollCount, eventCount, adminCount, modCount, bannedCount, activeMembers });
+});
+
 // Messenger (Phase 6 + Phase 63 enhancements)
 app.get('/api/messages', (req, res) => {
   const { userId, withId, search, limit: lim } = req.query || {};

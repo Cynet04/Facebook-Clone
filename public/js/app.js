@@ -434,14 +434,72 @@
     if (!card) return;
     if (!g) { card.classList.add('hidden'); return; }
     card.classList.remove('hidden');
-    const member = (g.members || []).includes(state.user.id);
+    const member = (g.members || []).some(m => m.id === state.user.id);
+    const myRole = g.members?.find(m => m.id === state.user.id)?.role || 'none';
+    const isAdmin = myRole === 'admin';
+    const isMod = myRole === 'moderator' || isAdmin;
+
     $('#groupDetailTitle').textContent = g.name;
     $('#groupDetailMeta').textContent = `${(g.members||[]).length} members`;
-    $('#groupPostForm').classList.toggle('hidden', !member);
     $('#groupGateMsg').textContent = member ? '' : 'Join this group to view/post in its feed (posting restricted).';
-    $('#groupPosts').innerHTML = state.groupPosts.length
-      ? state.groupPosts.map(p => `<div class="card subtle"><div class="post-head"><span class="avatar-sm">${esc(initials(userById(p.userId).name))}</span><div><div class="post-author">${esc(userById(p.userId).name)}</div><div class="post-time">${esc(timeAgo(p.createdAt))}</div></div></div><div class="post-body">${esc(p.content)}</div></div>`).join('')
-      : `<div class="muted">${member ? 'No group posts yet.' : 'Group posts are visible to members in this MVP view after joining.'}</div>`;
+
+    // Update tab buttons
+    const tabs = ['posts','polls','announcements','events','members','moderation'];
+    const activeTab = state.groupTab || 'posts';
+    $('#groupTabs').innerHTML = tabs.map(t => `<button class="btn small ${t===activeTab?'primary':''}" data-group-tab="${esc(t)}">${esc(t.charAt(0).toUpperCase()+t.slice(1))}</button>`).join(' ');
+
+    // Show/hide forms based on active tab
+    $('#groupPostForm').classList.toggle('hidden', !(member && activeTab === 'posts'));
+    $('#groupPollForm').classList.toggle('hidden', !(member && activeTab === 'polls'));
+    $('#groupAnnouncementForm').classList.toggle('hidden', !(isMod && activeTab === 'announcements'));
+    $('#groupEventForm').classList.toggle('hidden', !(member && activeTab === 'events'));
+
+    // Render content based on active tab
+    if (activeTab === 'posts') {
+      $('#groupContent').innerHTML = state.groupPosts.length
+        ? state.groupPosts.map(p => `<div class="card subtle"><div class="post-head"><span class="avatar-sm">${esc(initials(userById(p.userId).name))}</span><div><div class="post-author">${esc(userById(p.userId).name)}</div><div class="post-time">${esc(timeAgo(p.createdAt))}</div></div></div><div class="post-body">${esc(p.content)}</div><div class="row gap" style="margin-top:8px;font-size:12px">${isMod || p.userId===state.user.id ? `<button class="btn small" data-group-delete-post="${esc(p.id)}">Delete</button>` : ''}</div></div>`).join('')
+        : `<div class="muted">${member ? 'No group posts yet.' : 'Group posts are visible to members in this MVP view after joining.'}</div>`;
+    } else if (activeTab === 'polls') {
+      const polls = (g.polls || []).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+      $('#groupContent').innerHTML = polls.length ? polls.map(poll => {
+        const voted = poll.options.some(o => o.votes.includes(state.user.id));
+        const myVote = poll.options.find(o => o.votes.includes(state.user.id));
+        const expired = poll.expiresAt && new Date(poll.expiresAt) < new Date();
+        return `<div class="card poll-card"><div><strong>${esc(poll.question)}</strong>${expired ? ' <span class="pill">Expired</span>' : ''}</div><div class="muted">${esc(timeAgo(poll.createdAt))}</div>${poll.options.map(o => `<div class="row gap" style="align-items:center;margin:4px 0"><input type="radio" name="poll_${poll.id}" value="${esc(o.id)}" ${myVote?.id===o.id?'checked':''} ${expired||voted?'disabled':''} data-poll-vote="${esc(poll.id)}" data-poll-option="${esc(o.id)}" /><label style="flex:1">${esc(o.text)} <span class="muted">(${o.votes.length} votes)</span></label></div>`).join('')}</div>`;
+      }).join('') : '<div class="muted">No polls yet.</div>';
+    } else if (activeTab === 'announcements') {
+      const anns = (g.announcements || []).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt)-new Date(a.createdAt));
+      $('#groupContent').innerHTML = anns.length ? anns.map(a => `<div class="card ${a.pinned?'subtle':''}"><div class="row" style="justify-content:space-between"><strong>${esc(a.title)}</strong>${a.pinned?'<span class="pill">Pinned</span>':''}</div><div class="muted">${esc(userById(a.userId).name)} · ${esc(timeAgo(a.createdAt))}</div><div style="margin-top:8px">${esc(a.content)}</div></div>`).join('') : '<div class="muted">No announcements yet.</div>';
+    } else if (activeTab === 'events') {
+      const events = (g.events || []).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const attending = (g.events || []).filter(e => e.attendees?.includes(state.user.id));
+      $('#groupContent').innerHTML = events.length ? events.map(e => {
+        const going = e.attendees?.includes(state.user.id);
+        return `<div class="card"><div><strong>${esc(e.title)}</strong></div><div class="muted">${esc(new Date(e.date).toLocaleString())} · ${esc(e.attendees?.length||0)} going</div><div>${esc(e.description||'')}</div><div class="row gap" style="margin-top:8px"><button class="btn small ${going?'':'primary'}" data-group-event-rsvp="${esc(e.id)}">${going?'Going':'RSVP'}</button></div></div>`;
+      }).join('') : '<div class="muted">No events yet.</div>';
+    } else if (activeTab === 'members') {
+      const members = g.members || [];
+      const admins = members.filter(m => m.role === 'admin');
+      const mods = members.filter(m => m.role === 'moderator');
+      const regulars = members.filter(m => m.role === 'member');
+      const banned = g.banned || [];
+      $('#groupContent').innerHTML = `
+        <div class="card"><h4>Admins (${admins.length})</h4>${admins.map(m => `<div class="list-row"><a href="#" data-open-profile="${esc(m.id)}">${esc(userById(m.id).name)}</a>${isAdmin && m.id!==state.user.id ? `<button class="btn small" data-group-demote="${esc(m.id)}">Demote</button>` : ''}</div>`).join('')}</div>
+        <div class="card"><h4>Moderators (${mods.length})</h4>${mods.map(m => `<div class="list-row"><a href="#" data-open-profile="${esc(m.id)}">${esc(userById(m.id).name)}</a>${isAdmin ? `<button class="btn small" data-group-promote="${esc(m.id)}" data-role="admin">Promote to Admin</button><button class="btn small" data-group-demote="${esc(m.id)}">Demote</button>` : ''}</div>`).join('')}</div>
+        <div class="card"><h4>Members (${regulars.length})</h4>${regulars.map(m => `<div class="list-row"><a href="#" data-open-profile="${esc(m.id)}">${esc(userById(m.id).name)}</a>${isMod ? `<button class="btn small" data-group-promote="${esc(m.id)}" data-role="moderator">Promote to Mod</button><button class="btn small" data-group-ban="${esc(m.id)}">Ban</button><button class="btn small" data-group-mute="${esc(m.id)}">Mute</button>` : ''}</div>`).join('')}</div>
+        ${banned.length ? `<div class="card"><h4>Banned (${banned.length})</h4>${banned.map(b => `<div class="list-row"><span class="muted">${esc(userById(b.id).name)}</span><span class="muted">${esc(b.reason)}</span><button class="btn small" data-group-unban="${esc(b.id)}">Unban</button></div>`).join('')}</div>` : ''}
+      `;
+    } else if (activeTab === 'moderation') {
+      if (!isMod) {
+        $('#groupContent').innerHTML = '<div class="muted">Only admins and moderators can access moderation tools.</div>';
+        return;
+      }
+      const insights = state.groupInsights || {};
+      $('#groupContent').innerHTML = `
+        <div class="card"><h4>Group Insights</h4><div class="row gap" style="flex-wrap:wrap;margin:8px 0"><div class="pill">Members: ${insights.memberCount||0}</div><div class="pill">Posts: ${insights.postCount||0}</div><div class="pill">Polls: ${insights.pollCount||0}</div><div class="pill">Events: ${insights.eventCount||0}</div><div class="pill">Admins: ${insights.adminCount||0}</div><div class="pill">Moderators: ${insights.modCount||0}</div><div class="pill">Banned: ${insights.bannedCount||0}</div></div><button class="btn small" data-group-refresh-insights>Refresh Insights</button></div>
+        <div class="card"><h4>Recent Reports</h4><div class="muted">Reports would appear here in a full implementation.</div></div>
+      `;
+    }
   }
 
   function renderGroups() {
@@ -1282,6 +1340,94 @@
     if (openGroup) { e.preventDefault(); state.activeGroupId = openGroup.dataset.openGroup; await loadGroupPosts(); renderGroups(); return; }
     const join = e.target.closest('[data-join-group]');
     if (join) { await api(`/api/groups/${join.dataset.joinGroup}/join`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); state.activeGroupId = state.activeGroupId || join.dataset.joinGroup; await loadAux(); await loadGroupPosts(); renderGroups(); return; }
+    const groupTab = e.target.closest('[data-group-tab]');
+    if (groupTab && state.user) {
+      state.groupTab = groupTab.dataset.groupTab;
+      if (state.groupTab === 'moderation') {
+        const insights = await api(`/api/groups/${state.activeGroupId}/insights`).catch(err=>alert(err.message));
+        if (insights) state.groupInsights = insights;
+      }
+      renderGroups(); return;
+    }
+    const groupPollVote = e.target.closest('[data-poll-vote]');
+    if (groupPollVote && state.user) {
+      const pollId = groupPollVote.dataset.pollVote;
+      const optionId = groupPollVote.dataset.pollOption;
+      await api(`/api/groups/${state.activeGroupId}/polls/${pollId}/vote`, { method:'POST', body: JSON.stringify({ userId: state.user.id, optionId }) }).catch(err=>alert(err.message));
+      trackEvent('group_poll_vote'); await loadAux(); renderGroups(); return;
+    }
+    const groupDeletePost = e.target.closest('[data-group-delete-post]');
+    if (groupDeletePost && state.user) {
+      if (!confirm('Delete this post?')) return;
+      await api(`/api/groups/${state.activeGroupId}/posts/${groupDeletePost.dataset.groupDeletePost}`, { method:'DELETE', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('group_post_delete'); await loadAux(); renderGroups(); return;
+    }
+    const groupPromote = e.target.closest('[data-group-promote]');
+    if (groupPromote && state.user) {
+      const targetId = groupPromote.dataset.groupPromote;
+      const role = groupPromote.dataset.role;
+      await api(`/api/groups/${state.activeGroupId}/role`, { method:'POST', body: JSON.stringify({ userId: state.user.id, targetUserId: targetId, role }) }).catch(err=>alert(err.message));
+      trackEvent('group_promote', { role }); await loadAux(); renderGroups(); return;
+    }
+    const groupDemote = e.target.closest('[data-group-demote]');
+    if (groupDemote && state.user) {
+      const targetId = groupDemote.dataset.groupDemote;
+      await api(`/api/groups/${state.activeGroupId}/role`, { method:'POST', body: JSON.stringify({ userId: state.user.id, targetUserId: targetId, role: 'member' }) }).catch(err=>alert(err.message));
+      trackEvent('group_demote'); await loadAux(); renderGroups(); return;
+    }
+    const groupBan = e.target.closest('[data-group-ban]');
+    if (groupBan && state.user) {
+      const targetId = groupBan.dataset.groupBan;
+      const reason = prompt('Ban reason:') || 'Violated group rules';
+      await api(`/api/groups/${state.activeGroupId}/moderate/ban`, { method:'POST', body: JSON.stringify({ userId: state.user.id, targetUserId: targetId, reason }) }).catch(err=>alert(err.message));
+      trackEvent('group_ban'); await loadAux(); renderGroups(); return;
+    }
+    const groupMute = e.target.closest('[data-group-mute]');
+    if (groupMute && state.user) {
+      const targetId = groupMute.dataset.groupMute;
+      const duration = prompt('Mute duration (hours, empty for indefinite):');
+      await api(`/api/groups/${state.activeGroupId}/moderate/mute`, { method:'POST', body: JSON.stringify({ userId: state.user.id, targetUserId: targetId, durationHours: duration ? Number(duration) : null }) }).catch(err=>alert(err.message));
+      trackEvent('group_mute'); await loadAux(); renderGroups(); return;
+    }
+    const groupUnban = e.target.closest('[data-group-unban]');
+    if (groupUnban && state.user) {
+      const targetId = groupUnban.dataset.groupUnban;
+      const db = await api('/api/admin/export').catch(()=>null); // mock: just remove from banned
+      // In real app, would call an unban endpoint
+      alert('Unban would be implemented with a dedicated endpoint');
+      trackEvent('group_unban'); return;
+    }
+    const groupEventRsvp = e.target.closest('[data-group-event-rsvp]');
+    if (groupEventRsvp && state.user) {
+      const eventId = groupEventRsvp.dataset.groupEventRsvp;
+      const g = state.groups.find(x => x.id === state.activeGroupId);
+      const ev = g?.events?.find(e => e.id === eventId);
+      if (ev) {
+        const going = ev.attendees?.includes(state.user.id);
+        if (going) ev.attendees = ev.attendees.filter(id => id !== state.user.id);
+        else ev.attendees = [...(ev.attendees||[]), state.user.id];
+        await api(`/api/groups/${state.activeGroupId}/events/${eventId}`, { method:'PATCH', body: JSON.stringify({ attendees: ev.attendees }) }).catch(err=>alert(err.message));
+        trackEvent('group_event_rsvp'); await loadAux(); renderGroups();
+      }
+      return;
+    }
+    const groupRefreshInsights = e.target.closest('[data-group-refresh-insights]');
+    if (groupRefreshInsights && state.user) {
+      const insights = await api(`/api/groups/${state.activeGroupId}/insights`).catch(err=>alert(err.message));
+      if (insights) { state.groupInsights = insights; renderGroups(); }
+      return;
+    }
+    if (e.target.id === 'addPollOption') {
+      const container = $('#pollOptions');
+      const count = container.querySelectorAll('input[name="option"]').length + 1;
+      const input = document.createElement('input');
+      input.name = 'option';
+      input.placeholder = `Option ${count}`;
+      input.maxLength = 100;
+      input.required = true;
+      container.appendChild(input);
+      return;
+    }
   });
 
   document.addEventListener('submit', async (e) => {
@@ -1320,6 +1466,39 @@
       if (!String(content||'').trim()) return;
       await api(`/api/groups/${state.activeGroupId}/posts`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
       e.target.reset(); await loadGroupPosts(); renderGroups(); return;
+    }
+    if (e.target.id === 'groupPollForm') {
+      e.preventDefault();
+      if (!state.activeGroupId) return;
+      const formData = new FormData(e.target);
+      const question = formData.get('question');
+      const options = formData.getAll('option').filter(o => o.trim());
+      const expiresAt = formData.get('expiresAt') || null;
+      if (!question || options.length < 2) return;
+      await api(`/api/groups/${state.activeGroupId}/polls`, { method:'POST', body: JSON.stringify({ userId: state.user.id, question, options, expiresAt }) }).catch(err=>alert(err.message));
+      trackEvent('group_poll_create'); e.target.reset(); await loadAux(); renderGroups(); return;
+    }
+    if (e.target.id === 'groupAnnouncementForm') {
+      e.preventDefault();
+      if (!state.activeGroupId) return;
+      const formData = new FormData(e.target);
+      const title = formData.get('title');
+      const content = formData.get('content');
+      const pinned = formData.get('pinned') === 'on';
+      if (!title || !content) return;
+      await api(`/api/groups/${state.activeGroupId}/announcements`, { method:'POST', body: JSON.stringify({ userId: state.user.id, title, content, pinned }) }).catch(err=>alert(err.message));
+      trackEvent('group_announcement_create'); e.target.reset(); await loadAux(); renderGroups(); return;
+    }
+    if (e.target.id === 'groupEventForm') {
+      e.preventDefault();
+      if (!state.activeGroupId) return;
+      const formData = new FormData(e.target);
+      const title = formData.get('title');
+      const date = formData.get('date');
+      const description = formData.get('description');
+      if (!title || !date) return;
+      await api(`/api/groups/${state.activeGroupId}/events`, { method:'POST', body: JSON.stringify({ userId: state.user.id, title, date, description }) }).catch(err=>alert(err.message));
+      trackEvent('group_event_create'); e.target.reset(); await loadAux(); renderGroups(); return;
     }
 const chatForm = e.target.closest('[data-send-chat]');
       if (chatForm) {
