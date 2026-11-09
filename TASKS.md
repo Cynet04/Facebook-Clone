@@ -120,11 +120,11 @@
 - [x] Verify and commit
 
 ## Phase 19: Comment Replies & Comment Reactions (MVP)
-- [ ] Add comment reply data model (`parentId`)
-- [ ] Add comment reaction data/API (mock)
-- [ ] Render nested replies and reply composer
-- [ ] Render comment reaction buttons/counts
-- [ ] Verify and commit
+- [x] Add comment reply data model (`parentId`)
+- [x] Add comment reaction data/API (mock)
+- [x] Render nested replies and reply composer
+- [x] Render comment reaction buttons/counts
+- [x] Verify and commit
 
 ## Phase 20+: Infinite
 - [ ] Admin/moderation stubs

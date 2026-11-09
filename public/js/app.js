@@ -120,6 +120,34 @@
     return parts.join(' · ') || '0 reactions';
   }
 
+  function commentTree(comments) {
+    const byId = {}; comments.forEach(c => byId[c.id] = { ...c, children: [] });
+    const roots = [];
+    comments.forEach(c => { if (c.parentId && byId[c.parentId]) byId[c.parentId].children.push(byId[c.id]); else roots.push(byId[c.id]); });
+    return roots;
+  }
+  function commentReactionLabel(c) {
+    const counts = {}; Object.values(c.reactions || {}).forEach(r => counts[r] = (counts[r]||0)+1);
+    const total = Object.values(counts).reduce((a,b)=>a+b,0) || (c.likes||[]).length;
+    if (!total) return '';
+    const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+    return `${top ? reactionMeta(top[0])[0] : '👍'} ${total}`;
+  }
+  function renderComment(c, postId, depth=0) {
+    const my = c.reactions?.[state.user?.id];
+    const children = (c.children||[]).map(ch => renderComment(ch, postId, depth+1)).join('');
+    return `<div class="comment-block" style="margin-left:${Math.min(depth,3)*14}px">
+      <div class="comment"><strong>${esc(userById(c.userId).name)}</strong>${esc(c.content)}</div>
+      <div class="comment-actions">
+        ${['like','love','haha'].map(r=>`<button class="linkish ${my===r?'active':''}" data-react-comment="${esc(c.id)}" data-reaction="${r}">${reactionMeta(r)[0]}</button>`).join('')}
+        <span class="muted">${esc(commentReactionLabel(c))}</span>
+        <button class="linkish" data-reply-comment="${esc(c.id)}" data-post-id="${esc(postId)}">Reply</button>
+      </div>
+      <form class="comment-form reply-form hidden" data-comment-form="${esc(postId)}" data-parent-id="${esc(c.id)}"><input name="content" placeholder="Write a reply..." maxlength="500" /></form>
+      ${children}
+    </div>`;
+  }
+
   function postCard(p) {
     const u = userById(p.userId);
     const myReaction = p.reactions?.[state.user?.id] || ((p.likes || []).includes(state.user?.id) ? 'like' : null);
@@ -151,7 +179,7 @@
           <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?'🔖 Saved':'🔖 Save'}</button>
         </div>
         <div class="comments">
-          ${comments.map(c => `<div class="comment"><strong>${esc(userById(c.userId).name)}</strong>${esc(c.content)}</div>`).join('')}
+          ${commentTree(comments).map(c => renderComment(c, p.id)).join('')}
           <form class="comment-form" data-comment-form="${esc(p.id)}">
             <input name="content" placeholder="Write a comment..." maxlength="500" />
           </form>
@@ -271,7 +299,7 @@
   function notifText(n) {
     const actor = userById(n.actorId).name;
     if (n.type === 'like' || n.type === 'reaction') return `${actor} reacted to your post${n.reaction ? ` (${n.reaction})` : ''}.`;
-    if (n.type === 'comment') return `${actor} commented on your post.`;
+    if (n.type === 'comment' || n.type === 'reply') return n.type === 'reply' ? `${actor} replied to your comment.` : `${actor} commented on your post.`;
     if (n.type === 'share') return `${actor} shared your post.`;
     if (n.type === 'friend_request') return `${actor} sent you a friend request.`;
     if (n.type === 'message') return `${actor} sent you a message.`;
@@ -480,6 +508,13 @@
       await api(`/api/users/${state.user.id}/save`, { method:'POST', body: JSON.stringify({ postId: saveBtn.dataset.savePost }) }).catch(err=>alert(err.message));
       await loadFeed(); return;
     }
+    const reactComment = e.target.closest('[data-react-comment]');
+    if (reactComment && state.user) {
+      await api(`/api/comments/${reactComment.dataset.reactComment}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactComment.dataset.reaction || 'like' }) }).catch(()=>{});
+      await loadFeed(); return;
+    }
+    const replyBtn = e.target.closest('[data-reply-comment]');
+    if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
     const profileLink = e.target.closest('[data-open-profile]');
@@ -504,8 +539,9 @@
     if (commentForm && state.user) {
       e.preventDefault();
       const content = commentForm.querySelector('input').value.trim(); if (!content) return;
-      await api(`/api/posts/${commentForm.dataset.commentForm}/comments`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
-      commentForm.reset(); await loadFeed(); return;
+      const parentId = commentForm.dataset.parentId || null;
+      await api(`/api/posts/${commentForm.dataset.commentForm}/comments`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content, parentId }) }).catch(err=>alert(err.message));
+      commentForm.reset(); if (parentId) commentForm.classList.add('hidden'); await loadFeed(); return;
     }
     if (e.target.id === 'profileEditForm') {
       e.preventDefault();

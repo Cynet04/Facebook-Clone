@@ -194,10 +194,10 @@ app.get('/api/posts/:id/comments', (req, res) => {
   res.json((db.comments || []).filter(c => c.postId === req.params.id));
 });
 app.post('/api/posts/:id/comments', (req, res) => {
-  const { userId, content } = req.body || {};
+  const { userId, content, parentId } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
-  const comment = { id: uid('c'), postId: req.params.id, userId, content, createdAt: new Date().toISOString() };
+  const comment = { id: uid('c'), postId: req.params.id, userId, parentId: parentId || null, content: String(content).slice(0, 1000), reactions: {}, likes: [], createdAt: new Date().toISOString() };
   db.comments = db.comments || [];
   db.comments.push(comment);
   const post = (db.posts || []).find(p => p.id === req.params.id);
@@ -205,8 +205,33 @@ app.post('/api/posts/:id/comments', (req, res) => {
     db.notifications = db.notifications || [];
     db.notifications.push({ id: uid('n'), userId: post.userId, type: 'comment', actorId: userId, postId: post.id, read: false, createdAt: new Date().toISOString() });
   }
+  if (parentId) {
+    const parent = db.comments.find(c => c.id === parentId);
+    if (parent && parent.userId && parent.userId !== userId) {
+      db.notifications = db.notifications || [];
+      db.notifications.push({ id: uid('n'), userId: parent.userId, type: 'reply', actorId: userId, postId: post?.id, commentId: parent.id, read: false, createdAt: new Date().toISOString() });
+    }
+  }
   writeDB(db);
   res.status(201).json(comment);
+});
+app.post('/api/comments/:id/react', (req, res) => {
+  const { userId, reaction } = req.body || {};
+  const allowed = new Set(['like','love','haha','wow','sad','angry']);
+  if (!userId || !allowed.has(reaction)) return res.status(400).json({ error: 'Invalid reaction' });
+  const db = readDB();
+  const comment = (db.comments || []).find(c => c.id === req.params.id);
+  if (!comment) return res.status(404).json({ error: 'Not found' });
+  comment.reactions = comment.reactions || {};
+  comment.likes = comment.likes || [];
+  const prev = comment.reactions[userId];
+  if (prev === reaction) { delete comment.reactions[userId]; comment.likes = comment.likes.filter(id => id !== userId); }
+  else {
+    comment.reactions[userId] = reaction;
+    if (!comment.likes.includes(userId)) comment.likes.push(userId);
+  }
+  writeDB(db);
+  res.json(comment);
 });
 
 // Friends (Phase 5 base)
