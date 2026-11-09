@@ -126,9 +126,16 @@
 - [x] Render comment reaction buttons/counts
 - [x] Verify and commit
 
-## Phase 20+: Infinite
+## Phase 20: Post Editing & Deletion (MVP)
+- [ ] Add edit/delete post APIs with owner checks (mock)
+- [ ] Add post menu UI for owner actions
+- [ ] Support inline edit/save/cancel and delete confirm
+- [ ] Refresh feed/profile/search after mutations
+- [ ] Verify and commit
+
+## Phase 21+: Infinite
 - [ ] Admin/moderation stubs
 - [ ] PWA/offline stub
 - [ ] Real-time transport mock improvements
-- [ ] Post editing/deletion
+- [ ] Comment editing/deletion
 - [ ] ...continue indefinitely
