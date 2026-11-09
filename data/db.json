@@ -79,5 +79,15 @@
       "likes": [],
       "createdAt": "2026-11-09T11:08:06.373Z"
     }
+  ],
+  "reels": [
+    {
+      "id": "rl1",
+      "caption": "Mock reel demo",
+      "creatorUserId": "u1",
+      "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      "likes": [],
+      "createdAt": "2026-11-09T11:16:51.816Z"
+    }
   ]
 }

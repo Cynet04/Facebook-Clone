@@ -16,6 +16,7 @@
       eventItems: [],
       fundraisers: [],
       pages: [],
+      reels: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -132,7 +133,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -145,6 +146,7 @@
     if (state.view === 'birthdays') renderBirthdays();
     if (state.view === 'fundraisers') renderFundraisers();
     if (state.view === 'pages') renderPages();
+    if (state.view === 'reels') renderReels();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -439,6 +441,9 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
+  function renderReels() {
+    $('#reelsView').innerHTML = `<div class="card"><h2>Reels</h2><p class="muted">Short video stubs (mock).</p></div>${(state.reels||[]).map(r=>`<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-reel-like="${esc(r.id)}">👍 ${(r.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No reels yet.</div>'}`;
+  }
   function renderPages() {
     $('#pagesView').innerHTML = `
       <div class="card"><h2>Pages</h2><p class="muted">Mock pages (create + like/follow stub).</p>
@@ -576,6 +581,7 @@
     try { state.eventItems = await api('/api/events'); } catch { state.eventItems = []; }
     try { state.fundraisers = await api('/api/fundraisers'); } catch { state.fundraisers = []; }
     try { state.pages = await api('/api/pages'); } catch { state.pages = []; }
+    try { state.reels = await api('/api/reels'); } catch { state.reels = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
@@ -765,6 +771,11 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-reel-like]') && state.user) {
+      const id = e.target.closest('[data-reel-like]').dataset.reelLike;
+      await api(`/api/reels/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('reel_like'); await loadAux(); renderReels(); return;
+    }
     if (e.target.closest('[data-page-like]') && state.user) {
       const id = e.target.closest('[data-page-like]').dataset.pageLike;
       await api(`/api/pages/${id}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));

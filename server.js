@@ -686,6 +686,18 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Reels stub (Phase 49) ----------
+app.get('/api/reels', (req, res) => { const db = readDB(); res.json((db.reels || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/reels/:id/react', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  r.likes = r.likes || []; const i = r.likes.indexOf(userId); if (i >= 0) r.likes.splice(i,1); else r.likes.push(userId);
+  writeDB(db); res.json(r);
+});
+
 // Analytics/events stub (Phase 32)
 app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};

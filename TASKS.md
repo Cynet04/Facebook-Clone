@@ -329,9 +329,16 @@
 - [x] Track collection interactions via analytics
 - [x] Verify and commit
 
-## Phase 49+: Infinite
-- [ ] Reels stub
+## Phase 49: Reels Stub
+- [x] Add `/api/reels` mock endpoints and `reels` seed data
+- [x] Add Reels nav/view shell with vertical card/player placeholders
+- [x] Add like/save mock interactions
+- [x] Track reels interactions via analytics
+- [x] Verify and commit
+
+## Phase 50+: Infinite
 - [ ] Gaming stub
 - [ ] Jobs stub
 - [ ] Ad center stub
+- [ ] Climate/Science Center stub
 - [ ] ...continue indefinitely
