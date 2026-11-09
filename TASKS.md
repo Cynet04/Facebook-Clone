@@ -168,9 +168,16 @@
 - [x] Ensure color-contrast-safe status indicators in both themes
 - [x] Verify and commit
 
-## Phase 26+: Infinite
-- [ ] User blocking/reporting mock expansion
+## Phase 26: User Blocking & Reporting Expansion (Mock)
+- [ ] Add block/unblock user API and local state handling
+- [ ] Hide blocked users' posts/messages/contacts in UI (mock)
+- [ ] Add block action in profile/friends views
+- [ ] Expand report reasons/categories and blocked-user safeguards
+- [ ] Verify and commit
+
+## Phase 27+: Infinite
 - [ ] Performance polish
 - [ ] i18n stub
 - [ ] E2E test scaffold
+- [ ] Data export/import mock
 - [ ] ...continue indefinitely
