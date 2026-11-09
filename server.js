@@ -8,10 +8,27 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
 
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(cors({ origin: true, methods: ['GET','POST','PATCH','DELETE','OPTIONS'], allowedHeaders: ['Content-Type'] }));
+app.use(express.json({ limit: '256kb' }));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const rateBuckets = new Map();
+function rateLimit(keyFn, limit, windowMs) {
+  return (req, res, next) => {
+    const key = keyFn(req);
+    const now = Date.now();
+    const b = rateBuckets.get(key) || { count: 0, reset: now + windowMs };
+    if (now > b.reset) { b.count = 0; b.reset = now + windowMs; }
+    b.count += 1; rateBuckets.set(key, b);
+    res.setHeader('X-RateLimit-Limit', String(limit));
+    res.setHeader('X-RateLimit-Remaining', String(Math.max(0, limit - b.count)));
+    if (b.count > limit) return res.status(429).json({ error: 'Rate limit exceeded (mock). Try again later.' });
+    next();
+  };
+}
+const authLimit = rateLimit(req => `auth:${req.ip}`, 30, 10 * 60 * 1000);
+const writeLimit = rateLimit(req => `write:${req.ip}:${req.path}`, 120, 10 * 60 * 1000);
 
 function readDB() {
   try {
@@ -34,7 +51,7 @@ function uid(prefix = 'id') {
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 // Auth (mock)
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', authLimit, (req, res) => {
   const { email, password } = req.body || {};
   const db = readDB();
   const user = db.users.find(u => u.email === email && u.password === password);
@@ -43,7 +60,7 @@ app.post('/api/auth/login', (req, res) => {
   res.json({ user: safe, token: `mock_${user.id}` });
 });
 
-app.post('/api/auth/signup', (req, res) => {
+app.post('/api/auth/signup', authLimit, (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
@@ -148,7 +165,7 @@ app.get('/api/posts', (req, res) => {
   if (!limit && !offset) return res.json(posts);
   res.json({ items: posts.slice(offset, offset + limit), total: posts.length, offset, limit });
 });
-app.post('/api/posts', (req, res) => {
+app.post('/api/posts', writeLimit, (req, res) => {
   const { userId, content, imageUrl, scheduledFor } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const img = String(imageUrl || '').trim();
@@ -218,7 +235,7 @@ app.post('/api/posts/:id/share', (req, res) => {
   res.status(201).json(shared);
 });
 
-app.post('/api/posts/:id/like', (req, res) => {
+app.post('/api/posts/:id/like', writeLimit, (req, res) => {
   const { userId } = req.body || {};
   const db = readDB();
   const post = (db.posts || []).find(p => p.id === req.params.id);
@@ -238,7 +255,7 @@ app.post('/api/posts/:id/like', (req, res) => {
   writeDB(db);
   res.json(post);
 });
-app.post('/api/posts/:id/react', (req, res) => {
+app.post('/api/posts/:id/react', writeLimit, (req, res) => {
   const { userId, reaction } = req.body || {};
   const allowed = new Set(['like','love','haha','wow','sad','angry']);
   if (!userId || !allowed.has(reaction)) return res.status(400).json({ error: 'Invalid reaction' });
@@ -268,7 +285,7 @@ app.get('/api/posts/:id/comments', (req, res) => {
   const db = readDB();
   res.json((db.comments || []).filter(c => c.postId === req.params.id));
 });
-app.post('/api/posts/:id/comments', (req, res) => {
+app.post('/api/posts/:id/comments', writeLimit, (req, res) => {
   const { userId, content, parentId } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
@@ -320,7 +337,7 @@ app.delete('/api/comments/:id', (req, res) => {
   res.json({ ok: true, removed: remove.size });
 });
 
-app.post('/api/comments/:id/react', (req, res) => {
+app.post('/api/comments/:id/react', writeLimit, (req, res) => {
   const { userId, reaction } = req.body || {};
   const allowed = new Set(['like','love','haha','wow','sad','angry']);
   if (!userId || !allowed.has(reaction)) return res.status(400).json({ error: 'Invalid reaction' });
@@ -340,7 +357,7 @@ app.post('/api/comments/:id/react', (req, res) => {
 });
 
 // Friends (Phase 5 base)
-app.post('/api/friends/request', (req, res) => {
+app.post('/api/friends/request', writeLimit, (req, res) => {
   const { fromId, toId } = req.body || {};
   if (!fromId || !toId || fromId === toId) return res.status(400).json({ error: 'Invalid request' });
   const db = readDB();
@@ -393,7 +410,7 @@ app.get('/api/groups', (req, res) => {
   const db = readDB();
   res.json([...(db.groups || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
 });
-app.post('/api/groups', (req, res) => {
+app.post('/api/groups', writeLimit, (req, res) => {
   const { name, ownerId } = req.body || {};
   if (!name || !ownerId) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
@@ -441,7 +458,7 @@ app.get('/api/messages', (req, res) => {
   const msgs = (db.messages || []).filter(m => !userId || m.fromId === userId || m.toId === userId);
   res.json(msgs.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)));
 });
-app.post('/api/messages', (req, res) => {
+app.post('/api/messages', writeLimit, (req, res) => {
   const { fromId, toId, content } = req.body || {};
   if (!fromId || !toId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
@@ -471,7 +488,7 @@ app.get('/api/stories', (req, res) => {
   }).sort((a,b)=>new Date(b.createdAt || b.scheduledFor)-new Date(a.createdAt || a.scheduledFor));
   res.json(stories);
 });
-app.post('/api/stories', (req, res) => {
+app.post('/api/stories', writeLimit, (req, res) => {
   const { userId, text, bg, scheduledFor } = req.body || {};
   if (!userId || !text) return res.status(400).json({ error: 'Missing fields' });
   let sched = null;
@@ -493,7 +510,7 @@ app.get('/api/marketplace', (req, res) => {
   const db = readDB();
   res.json([...(db.marketplace || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
 });
-app.post('/api/marketplace', (req, res) => {
+app.post('/api/marketplace', writeLimit, (req, res) => {
   const { userId, title, price, location, imageUrl } = req.body || {};
   if (!userId || !title || price === undefined || price === '') return res.status(400).json({ error: 'Missing fields' });
   const img = String(imageUrl || '').trim();
@@ -530,7 +547,7 @@ app.get('/api/admin/diagnostics', (req, res) => {
     counts: Object.fromEntries(Object.entries(db).map(([k,v]) => [k, Array.isArray(v)?v.length:0]))
   });
 });
-app.post('/api/admin/import', (req, res) => {
+app.post('/api/admin/import', authLimit, (req, res) => {
   const { mode, db } = req.body || {};
   if (!['merge','replace'].includes(mode) || !db) return res.status(400).json({ error: 'Invalid import payload' });
   const incoming = sanitizeDB(db);
@@ -556,7 +573,7 @@ app.get('/api/reports', (req, res) => {
   const db = readDB();
   res.json([...(db.reports || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
 });
-app.post('/api/reports', (req, res) => {
+app.post('/api/reports', writeLimit, (req, res) => {
   const { reporterId, targetType, targetId, reason } = req.body || {};
   if (!reporterId || !['post','comment'].includes(targetType) || !targetId) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
@@ -578,7 +595,7 @@ app.post('/api/reports/:id/resolve', (req, res) => {
 });
 
 // Analytics/events stub (Phase 32)
-app.post('/api/analytics/events', (req, res) => {
+app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};
   if (!type) return res.status(400).json({ error: 'Missing type' });
   const db = readDB();

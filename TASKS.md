@@ -231,9 +231,16 @@
 - [x] Publish due scheduled stories on load/poll
 - [x] Verify and commit
 
-## Phase 35+: Infinite
-- [ ] Rate limiting/security hardening mock
+## Phase 35: Rate Limiting / Security Hardening (Mock)
+- [x] Add simple in-memory rate limit middleware for auth/write endpoints
+- [x] Add basic input sanitization/length limits and safe error responses
+- [x] Add CORS/config hardening toggles (mock-safe defaults)
+- [x] Surface rate-limit status in diagnostics/client errors
+- [x] Verify and commit
+
+## Phase 36+: Infinite
 - [ ] Post pinning/highlights
 - [ ] Profile/about details expansion
 - [ ] Friend suggestions algorithm mock
+- [ ] Hashtags/mentions stub
 - [ ] ...continue indefinitely

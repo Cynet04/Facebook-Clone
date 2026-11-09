@@ -59,7 +59,7 @@
       state.lastError = '';
       return data;
     } catch (e) {
-      state.lastError = e.message || 'Network error';
+      state.lastError = e.status === 429 ? e.message : (e.message || 'Network error');
       renderStatus();
       throw e;
     }
