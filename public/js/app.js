@@ -260,6 +260,14 @@
     $('#sessionInfo').innerHTML = state.user ? `<div><strong>${esc(state.user.name)}</strong></div><div class="muted">${esc(state.user.email)}</div><div class="muted">Theme: ${esc(state.theme)}</div><div class="muted">Audience label: ${esc(audienceLabel(state.settings.audience))}</div>` : '<div class="muted">Not signed in.</div>';
   }
 
+  function renderMemories() {
+    const el = $('#memoriesCard'); if (!el) return;
+    const now = new Date(); const key = `${now.getMonth()}-${now.getDate()}`;
+    const hits = (state.posts||[]).filter(p => { const d = new Date(p.createdAt||''); return !Number.isNaN(d.getTime()) && d.getFullYear()!==now.getFullYear() && `${d.getMonth()}-${d.getDate()}`===key && visiblePosts().some(v=>v.id===p.id); }).slice(0,2);
+    if (!hits.length) { el.classList.add('hidden'); el.innerHTML=''; return; }
+    el.classList.remove('hidden');
+    el.innerHTML = `<div class="row" style="justify-content:space-between"><strong>On This Day</strong><button class="btn small" data-memory-open="1">View</button></div><div class="muted" style="margin:6px 0">Memories from ${now.toLocaleDateString()}</div>${hits.map(p=>`<div class="list-row"><div><strong>${esc(userById(p.userId).name)}</strong><div class="muted">${esc((p.content||'').slice(0,90))}${(p.content||'').length>90?'…':''}</div></div><span class="muted">${new Date(p.createdAt).getFullYear()}</span></div>`).join('')}`;
+  }
   function renderStories() {
     const rail = $('#storiesRail');
     if (!rail) return;
@@ -681,6 +689,7 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-memory-open]')) { trackEvent('memory_open'); state.view='home'; renderView(); return; }
     const watchLike = e.target.closest('[data-watch-like]');
     if (watchLike && state.user) { await api(`/api/videos/${watchLike.dataset.watchLike}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); trackEvent('watch_like'); await loadAux(); renderWatch(); return; }
     const pollVote = e.target.closest('[data-poll-vote]');

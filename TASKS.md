@@ -287,9 +287,16 @@
 - [x] Track watch interactions via analytics
 - [x] Verify and commit
 
-## Phase 43+: Infinite
-- [ ] Memories/on-this-day
+## Phase 43: Memories / On This Day (Stub)
+- [x] Add client-side memories selector from historical posts/stories
+- [x] Add Memories/On This Day card on home view
+- [x] Add empty-state and date formatting
+- [x] Track memory interactions via analytics
+- [x] Verify and commit
+
+## Phase 44+: Infinite
 - [ ] Events stub
 - [ ] Birthdays stub
 - [ ] Fundraisers stub
+- [ ] Pages stub
 - [ ] ...continue indefinitely
