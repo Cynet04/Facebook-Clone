@@ -82,6 +82,23 @@ app.patch('/api/users/:id', (req, res) => {
   safe.savedPosts = safe.savedPosts || [];
   res.json(safe);
 });
+app.post('/api/users/:id/block', (req, res) => {
+  const { targetId } = req.body || {};
+  if (!targetId || targetId === req.params.id) return res.status(400).json({ error: 'Invalid target' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.blockedUsers = user.blockedUsers || [];
+  user.friends = (user.friends || []).filter(id => id !== targetId);
+  user.friendRequests = (user.friendRequests || []).filter(id => id !== targetId);
+  const target = db.users.find(u => u.id === targetId);
+  if (target) { target.friends = (target.friends || []).filter(id => id !== user.id); target.friendRequests = (target.friendRequests || []).filter(id => id !== user.id); }
+  const idx = user.blockedUsers.indexOf(targetId);
+  if (idx >= 0) user.blockedUsers.splice(idx, 1); else user.blockedUsers.push(targetId);
+  writeDB(db);
+  res.json({ blockedUsers: user.blockedUsers });
+});
+
 app.post('/api/users/:id/save', (req, res) => {
   const { postId } = req.body || {};
   if (!postId) return res.status(400).json({ error: 'Missing postId' });
@@ -297,6 +314,7 @@ app.post('/api/friends/request', (req, res) => {
   const from = db.users.find(u => u.id === fromId);
   const to = db.users.find(u => u.id === toId);
   if (!from || !to) return res.status(404).json({ error: 'User not found' });
+  if ((from.blockedUsers||[]).includes(toId) || (to.blockedUsers||[]).includes(fromId)) return res.status(403).json({ error: 'Blocked' });
   from.friends = from.friends || []; to.friends = to.friends || [];
   to.friendRequests = to.friendRequests || [];
   if (from.friends.includes(toId) || to.friendRequests.includes(fromId)) return res.json({ ok: true, status: 'noop' });
@@ -394,6 +412,9 @@ app.post('/api/messages', (req, res) => {
   const { fromId, toId, content } = req.body || {};
   if (!fromId || !toId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
+  const from = db.users.find(u => u.id === fromId);
+  const to = db.users.find(u => u.id === toId);
+  if (from && to && ((from.blockedUsers||[]).includes(toId) || (to.blockedUsers||[]).includes(fromId))) return res.status(403).json({ error: 'Blocked' });
   const msg = { id: uid('m'), fromId, toId, content: String(content).slice(0, 2000), createdAt: new Date().toISOString() };
   db.messages = db.messages || [];
   db.messages.push(msg);

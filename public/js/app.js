@@ -125,6 +125,9 @@
   }
 
   function userById(id) { return state.users.find(u => u.id === id) || { name: 'Unknown User', id }; }
+  function blockedIds() { return new Set(userById(state.user?.id).blockedUsers || []); }
+  function isBlockedEither(a, b) { const A = userById(a), B = userById(b); return (A.blockedUsers||[]).includes(b) || (B.blockedUsers||[]).includes(a); }
+  function visiblePosts() { const b = blockedIds(); return state.posts.filter(p => !b.has(p.userId) && !(p.sharedFrom && b.has(p.sharedFrom.userId))); }
 
   function reactionMeta(key) {
     return ({ like:['👍','Like','liked'], love:['❤️','Love','loved'], haha:['😆','Haha','reacted-haha'], wow:['😮','Wow','reacted-wow'], sad:['😢','Sad','reacted-sad'], angry:['😠','Angry','reacted-angry'] })[key] || ['👍','Like','liked'];
@@ -234,12 +237,13 @@
   function renderPosts() {
     renderStories();
     const container = $('#postsContainer');
-    if (!state.posts.length) {
-      container.innerHTML = `<div class="card muted">No posts yet. Be the first to post.</div>`;
+    const posts = visiblePosts();
+    if (!posts.length) {
+      container.innerHTML = `<div class="card muted">No posts to show.</div>`;
       return;
     }
     const hasMore = state.posts.length < (state.postsTotal || state.posts.length);
-    container.innerHTML = state.posts.map(p => postCard(p)).join('') + `
+    container.innerHTML = posts.map(p => postCard(p)).join('') + `
       <div class="card row" style="justify-content:center">
         ${hasMore ? `<button id="loadMorePosts" class="btn">${state.postsLoading ? 'Loading...' : 'Load more posts'}</button>` : `<span class="muted">No more posts</span>`}
       </div>`;
@@ -250,6 +254,7 @@
     const u = userById(id);
     const me = state.user;
     const isMe = u.id === me.id;
+    const blockedByMe = (userById(me.id).blockedUsers || []).includes(u.id);
     $('#profileName').textContent = u.name || 'User';
     $('#profileAvatar').textContent = initials(u.name);
     $('#profileBio').textContent = u.bio || '';
@@ -260,34 +265,37 @@
     const isFriend = (me.friends || []).includes(u.id);
     let actions = '';
     if (isMe) actions = `<button class="btn small" id="toggleEditProfile">Edit Profile</button>`;
-    else if (isFriend) actions = `<span class="pill">Friends</span><button class="btn small" data-message-user="${esc(u.id)}">Message</button>`;
-    else if (reqIncoming) actions = `<button class="btn primary small" data-respond-friend="${esc(u.id)}" data-accept="1">Confirm</button><button class="btn small" data-respond-friend="${esc(u.id)}" data-accept="0">Delete</button>`;
-    else if (reqSent) actions = `<span class="pill">Request sent</span>`;
-    else actions = `<button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button><button class="btn small" data-message-user="${esc(u.id)}">Message</button>`;
+    else if (isBlockedEither(me.id, u.id)) actions = `<span class="pill">${blockedByMe ? 'Blocked' : 'Unavailable'}</span>${blockedByMe ? `<button class="btn small" data-block-user="${esc(u.id)}">Unblock</button>`:''}`;
+    else if (isFriend) actions = `<span class="pill">Friends</span><button class="btn small" data-message-user="${esc(u.id)}">Message</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button>`;
+    else if (reqIncoming) actions = `<button class="btn primary small" data-respond-friend="${esc(u.id)}" data-accept="1">Confirm</button><button class="btn small" data-respond-friend="${esc(u.id)}" data-accept="0">Delete</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button>`;
+    else if (reqSent) actions = `<span class="pill">Request sent</span><button class="btn small" data-block-user="${esc(u.id)}">Block</button>`;
+    else actions = `<button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button><button class="btn small" data-message-user="${esc(u.id)}">Message</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button>`;
     $('#profileActions').innerHTML = actions;
     $('#profileEditCard').classList.toggle('hidden', !(isMe && state._editingProfile));
     if (isMe) {
       const f = $('#profileEditForm');
       f.name.value = u.name || ''; f.bio.value = u.bio || ''; f.cover.value = u.cover || '';
     }
-    const mine = state.posts.filter(p => p.userId === id);
+    const mine = visiblePosts().filter(p => p.userId === id);
     $('#profilePosts').innerHTML = mine.length ? mine.map(p => postCard(p)).join('') : `<div class="card muted">No posts on this timeline yet.</div>`;
   }
 
   function renderContactsInto(sel) {
-    const list = state.users.filter(u => u.id !== state.user?.id);
+    const b = blockedIds();
+    const list = state.users.filter(u => u.id !== state.user?.id && !b.has(u.id));
     const html = list.map(u => `<div class="contact menu-item" data-open-profile="${esc(u.id)}"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></div>`).join('') || '<div class="muted">No contacts.</div>';
     const el = $(sel); if (el) el.innerHTML = html;
   }
 
   function renderFriends() {
     const me = userById(state.user.id);
-    const reqs = (me.friendRequests || []).map(id => userById(id));
+    const b = blockedIds();
+    const reqs = (me.friendRequests || []).filter(id => !b.has(id)).map(id => userById(id));
     $('#friendRequests').innerHTML = reqs.length ? reqs.map(u => `<div class="list-row"><span class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><strong>${esc(u.name)}</strong></span><span class="row gap"><button class="btn primary small" data-respond-friend="${esc(u.id)}" data-accept="1">Confirm</button><button class="btn small" data-respond-friend="${esc(u.id)}" data-accept="0">Delete</button></span></div>`).join('') : '<div class="muted">No friend requests.</div>';
-    const people = state.users.filter(u => u.id !== me.id && !(me.friends||[]).includes(u.id) && !(me.friendRequests||[]).includes(u.id));
-    $('#peopleList').innerHTML = people.length ? people.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button></div>`).join('') : '<div class="muted">No suggestions.</div>';
-    const friends = (me.friends || []).map(id => userById(id));
-    $('#friendsList').innerHTML = friends.length ? friends.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><button class="btn small" data-message-user="${esc(u.id)}">Message</button></div>`).join('') : '<div class="muted">No friends yet.</div>';
+    const people = state.users.filter(u => u.id !== me.id && !b.has(u.id) && !(me.friends||[]).includes(u.id) && !(me.friendRequests||[]).includes(u.id));
+    $('#peopleList').innerHTML = people.length ? people.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><span class="row gap"><button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button></span></div>`).join('') : '<div class="muted">No suggestions.</div>';
+    const friends = (me.friends || []).filter(id => !b.has(id)).map(id => userById(id));
+    $('#friendsList').innerHTML = friends.length ? friends.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><span class="row gap"><button class="btn small" data-message-user="${esc(u.id)}">Message</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button></span></div>`).join('') : '<div class="muted">No friends yet.</div>';
   }
 
   async function loadGroupPosts() {
@@ -344,7 +352,8 @@
     return state.messages.filter(m => (m.fromId === state.user.id && m.toId === uid) || (m.fromId === uid && m.toId === state.user.id)).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
   }
   function renderMessengerPane(containerSel, compact=false) {
-    const users = threadUsers();
+    const b = blockedIds();
+    const users = threadUsers().filter(u => !b.has(u.id));
     const active = state.activeChatUserId && users.some(u=>u.id===state.activeChatUserId) ? state.activeChatUserId : users[0]?.id || null;
     state.activeChatUserId = active;
     const el = $(containerSel);
@@ -404,8 +413,9 @@
     const q = state.searchQuery.toLowerCase().trim();
     const meta = $('#searchMeta');
     if (!q) { meta.textContent = 'Type in the top search box and press Enter.'; $('#searchResults').innerHTML = ''; return; }
-    const users = state.users.filter(u => (u.name||'').toLowerCase().includes(q));
-    const posts = state.posts.filter(p => (p.content||'').toLowerCase().includes(q));
+    const b = blockedIds();
+    const users = state.users.filter(u => !b.has(u.id) && (u.name||'').toLowerCase().includes(q));
+    const posts = visiblePosts().filter(p => (p.content||'').toLowerCase().includes(q));
     meta.textContent = `Query: "${state.searchQuery}" · ${users.length} people · ${posts.length} posts`;
     $('#searchResults').innerHTML = `
       <div class="section-title">People</div>
@@ -528,12 +538,14 @@
     if (editBtn) { $(`#post-body-${editBtn.dataset.editPost}`)?.classList.add('hidden'); $(`#post-edit-${editBtn.dataset.editPost}`)?.classList.remove('hidden'); $(`#post-menu-${editBtn.dataset.editPost}`)?.classList.add('hidden'); return; }
     const cancelEdit = e.target.closest('[data-cancel-edit-post]');
     if (cancelEdit) { $(`#post-body-${cancelEdit.dataset.cancelEditPost}`)?.classList.remove('hidden'); $(`#post-edit-${cancelEdit.dataset.cancelEditPost}`)?.classList.add('hidden'); return; }
+    const blockBtn = e.target.closest('[data-block-user]');
+    if (blockBtn && state.user) { await api(`/api/users/${state.user.id}/block`, { method:'POST', body: JSON.stringify({ targetId: blockBtn.dataset.blockUser }) }).catch(err=>alert(err.message)); await loadFeed(true); return; }
     const delBtn = e.target.closest('[data-delete-post]');
     if (delBtn && state.user) { if (!confirm('Delete this post?')) return; await api(`/api/posts/${delBtn.dataset.deletePost}?userId=${encodeURIComponent(state.user.id)}`, { method:'DELETE' }).catch(err=>alert(err.message)); await loadFeed(true); return; }
     const reportPost = e.target.closest('[data-report-post]');
-    if (reportPost && state.user) { const reason = prompt('Report reason (mock):', 'Spam or misleading') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'post', targetId: reportPost.dataset.reportPost, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
+    if (reportPost && state.user) { const reason = prompt('Report reason (Spam, Harassment, Misinformation, Nudity, Violence, Other):', 'Spam') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'post', targetId: reportPost.dataset.reportPost, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
     const reportComment = e.target.closest('[data-report-comment]');
-    if (reportComment && state.user) { const reason = prompt('Report reason (mock):', 'Abusive') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'comment', targetId: reportComment.dataset.reportComment, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
+    if (reportComment && state.user) { const reason = prompt('Report reason (Harassment, Hate, Spam, Misinformation, Other):', 'Harassment') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'comment', targetId: reportComment.dataset.reportComment, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
     const resolve = e.target.closest('[data-resolve-report]');
     if (resolve) { await api(`/api/reports/${resolve.dataset.resolveReport}/resolve`, { method:'POST', body: JSON.stringify({ status: resolve.dataset.status }) }).catch(err=>alert(err.message)); await loadAux(); renderModeration(); return; }
     const reactBtn = e.target.closest('[data-react]');

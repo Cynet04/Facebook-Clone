@@ -169,11 +169,11 @@
 - [x] Verify and commit
 
 ## Phase 26: User Blocking & Reporting Expansion (Mock)
-- [ ] Add block/unblock user API and local state handling
-- [ ] Hide blocked users' posts/messages/contacts in UI (mock)
-- [ ] Add block action in profile/friends views
-- [ ] Expand report reasons/categories and blocked-user safeguards
-- [ ] Verify and commit
+- [x] Add block/unblock user API and local state handling
+- [x] Hide blocked users' posts/messages/contacts in UI (mock)
+- [x] Add block action in profile/friends views
+- [x] Expand report reasons/categories and blocked-user safeguards
+- [x] Verify and commit
 
 ## Phase 27+: Infinite
 - [ ] Performance polish
