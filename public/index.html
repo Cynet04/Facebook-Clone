@@ -32,6 +32,7 @@
           <div id="accountInfo" class="menu-item"></div>
           <button data-view="profile" class="menu-item">Profile</button>
           <button data-view="settings" class="menu-item">Settings & Privacy</button>
+          <button data-view="moderation" class="menu-item">Moderation (Mock)</button>
           <button id="themeMenuBtn" class="menu-item">Toggle Dark Mode</button>
           <button id="logoutBtn" class="menu-item">Log Out</button>
         </div>
@@ -190,11 +191,16 @@
                 <label class="check"><input type="checkbox" name="showEmail" /> Show email on profile</label>
                 <label class="check"><input type="checkbox" name="allowRequests" /> Allow friend requests</label>
                 <label class="check"><input type="checkbox" name="storySharing" /> Allow story sharing</label>
+                <label class="check"><input type="checkbox" name="isModerator" /> Enable local moderation tools (mock)</label>
                 <button class="btn primary small" type="submit">Save Settings</button>
               </form>
               <p id="settingsMsg" class="muted"></p>
             </div>
             <div class="card"><h3>Account / Session</h3><div id="sessionInfo"></div></div>
+          </div>
+
+          <div id="moderationView" class="hidden">
+            <div class="card"><h3>Moderation Queue (Mock)</h3><p id="moderationGate" class="muted"></p><div id="reportsList"></div></div>
           </div>
         </div>
       </section>

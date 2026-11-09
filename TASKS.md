@@ -141,11 +141,11 @@
 - [x] Verify and commit
 
 ## Phase 22: Admin/Moderation Stubs
-- [ ] Add admin/moderation view (mock, gated by local flag)
-- [ ] Add report-post/report-comment API stubs and UI actions
-- [ ] Add moderation queue display from JSON DB
-- [ ] Add mock resolve/dismiss actions
-- [ ] Verify and commit
+- [x] Add admin/moderation view (mock, gated by local flag)
+- [x] Add report-post/report-comment API stubs and UI actions
+- [x] Add moderation queue display from JSON DB
+- [x] Add mock resolve/dismiss actions
+- [x] Verify and commit
 
 ## Phase 23+: Infinite
 - [ ] PWA/offline stub

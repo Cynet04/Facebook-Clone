@@ -3,7 +3,7 @@
     user: JSON.parse(localStorage.getItem('fb_user') || 'null'),
     token: localStorage.getItem('fb_token') || '',
     theme: localStorage.getItem('fb_theme') || 'light',
-    settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true}'),
+    settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true,"isModerator":false}'),
     users: [],
     posts: [],
     postsOffset: 0,
@@ -12,6 +12,7 @@
     postsLoading: false,
     stories: [],
     marketplace: [],
+    reports: [],
     notifications: [],
     groups: [],
     groupPosts: [],
@@ -94,7 +95,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','saved','settings'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -104,6 +105,7 @@
     if (state.view === 'marketplace') renderMarketplace();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
+    if (state.view === 'moderation') renderModeration();
     if (state.view === 'search') renderSearch();
   }
 
@@ -144,7 +146,7 @@
         ${['like','love','haha'].map(r=>`<button class="linkish ${my===r?'active':''}" data-react-comment="${esc(c.id)}" data-reaction="${r}">${reactionMeta(r)[0]}</button>`).join('')}
         <span class="muted">${esc(commentReactionLabel(c))}</span>
         <button class="linkish" data-reply-comment="${esc(c.id)}" data-post-id="${esc(postId)}">Reply</button>
-        ${mine ? `<button class="linkish" data-edit-comment="${esc(c.id)}">Edit</button><button class="linkish danger" data-delete-comment="${esc(c.id)}">Delete</button>` : ''}
+        ${mine ? `<button class="linkish" data-edit-comment="${esc(c.id)}">Edit</button><button class="linkish danger" data-delete-comment="${esc(c.id)}">Delete</button>` : `<button class="linkish" data-report-comment="${esc(c.id)}">Report</button>`}
       </div>
       <form class="comment-form reply-form hidden" data-comment-form="${esc(postId)}" data-parent-id="${esc(c.id)}"><input name="content" placeholder="Write a reply..." maxlength="500" /></form>
       ${children}
@@ -182,6 +184,7 @@
           <button data-focus-comment="${esc(p.id)}">💬 Comment</button>
           <button data-share-post="${esc(p.id)}">↗️ Share</button>
           <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?'🔖 Saved':'🔖 Save'}</button>
+          <button data-report-post="${esc(p.id)}">🚩 Report</button>
         </div>
         <div class="comments">
           ${commentTree(comments).map(c => renderComment(c, p.id)).join('')}
@@ -411,6 +414,7 @@
     try { state.messages = await api(`/api/messages?userId=${encodeURIComponent(state.user.id)}`); } catch { state.messages = []; }
     try { state.stories = await api('/api/stories'); } catch { state.stories = []; }
     try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
+    try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     renderNotifications();
   }
   async function loadFeed() {
@@ -473,7 +477,7 @@
   $('#settingsForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
     const f = e.target;
-    saveSettings({ audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked });
+    saveSettings({ audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked, isModerator: f.isModerator.checked });
     $('#settingsMsg').textContent = 'Settings saved locally (mock).';
     renderProfile(); renderSettings();
   });
@@ -503,6 +507,12 @@
     if (cancelEdit) { $(`#post-body-${cancelEdit.dataset.cancelEditPost}`)?.classList.remove('hidden'); $(`#post-edit-${cancelEdit.dataset.cancelEditPost}`)?.classList.add('hidden'); return; }
     const delBtn = e.target.closest('[data-delete-post]');
     if (delBtn && state.user) { if (!confirm('Delete this post?')) return; await api(`/api/posts/${delBtn.dataset.deletePost}?userId=${encodeURIComponent(state.user.id)}`, { method:'DELETE' }).catch(err=>alert(err.message)); await loadFeed(true); return; }
+    const reportPost = e.target.closest('[data-report-post]');
+    if (reportPost && state.user) { const reason = prompt('Report reason (mock):', 'Spam or misleading') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'post', targetId: reportPost.dataset.reportPost, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
+    const reportComment = e.target.closest('[data-report-comment]');
+    if (reportComment && state.user) { const reason = prompt('Report reason (mock):', 'Abusive') || 'Other'; await api('/api/reports', { method:'POST', body: JSON.stringify({ reporterId: state.user.id, targetType:'comment', targetId: reportComment.dataset.reportComment, reason }) }).catch(err=>alert(err.message)); alert('Report submitted (mock).'); return; }
+    const resolve = e.target.closest('[data-resolve-report]');
+    if (resolve) { await api(`/api/reports/${resolve.dataset.resolveReport}/resolve`, { method:'POST', body: JSON.stringify({ status: resolve.dataset.status }) }).catch(err=>alert(err.message)); await loadAux(); renderModeration(); return; }
     const reactBtn = e.target.closest('[data-react]');
     if (reactBtn && state.user) {
       await api(`/api/posts/${reactBtn.dataset.react}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactBtn.dataset.reaction || 'like' }) }).catch(()=>{});

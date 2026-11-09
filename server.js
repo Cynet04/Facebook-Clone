@@ -18,7 +18,7 @@ function readDB() {
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(raw);
   } catch (e) {
-    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [] };
+    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [], reports: [] };
   }
 }
 
@@ -438,6 +438,32 @@ app.post('/api/marketplace', (req, res) => {
   db.marketplace.push(listing);
   writeDB(db);
   res.status(201).json(listing);
+});
+
+// Moderation stubs (Phase 22)
+app.get('/api/reports', (req, res) => {
+  const db = readDB();
+  res.json([...(db.reports || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
+});
+app.post('/api/reports', (req, res) => {
+  const { reporterId, targetType, targetId, reason } = req.body || {};
+  if (!reporterId || !['post','comment'].includes(targetType) || !targetId) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const report = { id: uid('r'), reporterId, targetType, targetId, reason: String(reason||'Other').slice(0,200), status: 'open', createdAt: new Date().toISOString() };
+  db.reports = db.reports || [];
+  db.reports.push(report);
+  writeDB(db);
+  res.status(201).json(report);
+});
+app.post('/api/reports/:id/resolve', (req, res) => {
+  const { status } = req.body || {};
+  const db = readDB();
+  const report = (db.reports || []).find(r => r.id === req.params.id);
+  if (!report) return res.status(404).json({ error: 'Not found' });
+  report.status = status === 'dismissed' ? 'dismissed' : 'resolved';
+  report.resolvedAt = new Date().toISOString();
+  writeDB(db);
+  res.json(report);
 });
 
 // SPA-ish fallback for hash routing / direct loads
