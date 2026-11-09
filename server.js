@@ -977,7 +977,31 @@ app.post('/api/games/:id/play', writeLimit, (req, res) => {
 });
 
 // ---------- Reels stub (Phase 49) ----------
-app.get('/api/reels', (req, res) => { const db = readDB(); res.json((db.reels || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.get('/api/reels', (req, res) => {
+  const db = readDB();
+  let reels = (db.reels || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  const { category, hashtag, creator, discovery } = req.query;
+  if (category) reels = reels.filter(r => (r.category||'General') === category);
+  if (hashtag) reels = reels.filter(r => (r.hashtags||[]).includes(hashtag));
+  if (creator) reels = reels.filter(r => r.creatorUserId === creator);
+  if (discovery === 'true') {
+    // Simple discovery algorithm: mix of recent, trending (likes/views), and diverse creators
+    const now = Date.now();
+    reels = reels.map(r => {
+      const ageHours = (now - new Date(r.createdAt).getTime()) / 3600000;
+      const engagement = ((r.likes||[]).length + (r.shares||0) + (r.comments||[]).length * 2) / Math.max(1, ageHours * 0.5);
+      return { ...r, _score: engagement };
+    }).sort((a,b) => b._score - a._score).slice(0, 20);
+  }
+  res.json(reels);
+});
+app.post('/api/reels', writeLimit, (req, res) => {
+  const { userId, caption, category, hashtags, url, thumbnail } = req.body || {};
+  if (!userId || !String(caption||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const reel = { id: uid('rl'), caption: String(caption).slice(0,500), category: String(category||'General').slice(0,60), hashtags: Array.isArray(hashtags) ? hashtags.map(String).slice(0,20) : [String(hashtags||'').slice(0,100)], url: String(url||'').slice(0,500), thumbnail: String(thumbnail||'').slice(0,500), creatorUserId: userId, likes: [], shares: 0, saves: [], comments: [], views: 0, createdAt: new Date().toISOString() };
+  db.reels = db.reels || []; db.reels.push(reel); writeDB(db); res.status(201).json(reel);
+});
 app.post('/api/reels/:id/react', writeLimit, (req, res) => {
   const { userId } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
@@ -985,6 +1009,50 @@ app.post('/api/reels/:id/react', writeLimit, (req, res) => {
   const r = (db.reels || []).find(x => x.id === req.params.id);
   if (!r) return res.status(404).json({ error: 'Reel not found' });
   r.likes = r.likes || []; const i = r.likes.indexOf(userId); if (i >= 0) r.likes.splice(i,1); else r.likes.push(userId);
+  writeDB(db); res.json(r);
+});
+app.post('/api/reels/:id/share', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  r.shares = Number(r.shares||0) + 1;
+  writeDB(db); res.json(r);
+});
+app.post('/api/reels/:id/save', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  r.saves = r.saves || []; const i = r.saves.indexOf(userId); if (i >= 0) r.saves.splice(i,1); else r.saves.push(userId);
+  writeDB(db); res.json(r);
+});
+app.post('/api/reels/:id/comment', writeLimit, (req, res) => {
+  const { userId, content } = req.body || {};
+  if (!userId || !String(content||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  r.comments = r.comments || [];
+  const comment = { id: uid('rc'), userId, content: String(content).slice(0,500), createdAt: new Date().toISOString() };
+  r.comments.push(comment);
+  writeDB(db); res.status(201).json(comment);
+});
+app.get('/api/reels/:id/insights', (req, res) => {
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  res.json({ views: Number(r.views||0), likes: (r.likes||[]).length, shares: Number(r.shares||0), saves: (r.saves||[]).length, comments: (r.comments||[]).length });
+});
+app.post('/api/reels/:id/view', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const r = (db.reels || []).find(x => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: 'Reel not found' });
+  r.views = Number(r.views||0) + 1;
   writeDB(db); res.json(r);
 });
 

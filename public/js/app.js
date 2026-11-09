@@ -454,7 +454,30 @@
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
   function renderReels() {
-    $('#reelsView').innerHTML = `<div class="card"><h2>Reels</h2><p class="muted">Short video stubs (mock).</p></div>${(state.reels||[]).map(r=>`<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-reel-like="${esc(r.id)}">👍 ${(r.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No reels yet.</div>'}`;
+    const reels = (state.reels||[]).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    $('#reelsView').innerHTML = `
+      <div class="card"><h2>Reels</h2><p class="muted">Enhanced reels with categories, hashtags, comments, shares, saves, analytics, discovery.</p>
+        <form id="reelForm" class="stack">
+          <input name="caption" placeholder="Caption" required maxlength="500" />
+          <input name="category" placeholder="Category (e.g. Comedy, Education, Music)" maxlength="60" />
+          <input name="hashtags" placeholder="Hashtags (comma-separated)" maxlength="100" />
+          <input name="url" placeholder="Video URL (MP4/WebM)" required maxlength="500" />
+          <input name="thumbnail" placeholder="Thumbnail URL (optional)" maxlength="500" />
+          <div><button class="btn primary small" type="submit">Create reel</button></div>
+        </form>
+      </div>
+      <div class="card"><h3>Feed</h3>
+        <div class="row gap" style="margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn small" data-reels-view="latest">Latest</button>
+          <button class="btn small primary" data-reels-view="discovery">Discovery</button>
+        </div>
+        ${reels.length ? reels.map(r => {
+          const liked = (r.likes||[]).includes(state.user?.id);
+          const saved = (r.saves||[]).includes(state.user?.id);
+          const hashtagsHtml = (r.hashtags||[]).map(h=>`<span class="hashtag">#${esc(h)}</span>`).join(' ');
+          return `<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)} · ${esc(r.category||'General')} · ${hashtagsHtml}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000" data-reel-view="${esc(r.id)}"></video><div class="row gap" style="margin-top:8px"><button class="btn small ${liked?'':'primary'}" data-reel-like="${esc(r.id)}">👍 ${(r.likes||[]).length}</button><button class="btn small" data-reel-comment="${esc(r.id)}">💬 ${(r.comments||[]).length}</button><button class="btn small" data-reel-share="${esc(r.id)}">↗ ${r.shares||0}</button><button class="btn small ${saved?'primary':''}" data-reel-save="${esc(r.id)}">${saved?'Saved':'Save'}</button><button class="btn small" data-reel-insights="${esc(r.id)}">Insights</button></div></div>`;
+        }).join('') : '<div class="card muted">No reels yet.</div>'}
+      </div>`;
   }
   function renderGaming() {
     $('#gamingView').innerHTML = `<div class="card"><h2>Gaming</h2><p class="muted">Instant games stub (mock).</p></div>${(state.games||[]).map(g=>`<div class="card game-card"><div class="muted">${esc(userById(g.creatorUserId).name)}</div><div><strong>${esc(g.title||'Game')}</strong></div><div class="muted">${esc(g.plays||0)} plays · ${esc((g.likes||[]).length)} likes</div><iframe src="${esc(g.url||'about:blank')}" style="width:100%;height:320px;border:none;border-radius:8px;background:#000"></iframe><div class="row gap" style="margin-top:8px"><button class="btn small" data-game-like="${esc(g.id)}">👍 ${(g.likes||[]).length}</button><button class="btn small primary" data-game-play="${esc(g.id)}">Play</button></div></div>`).join('') || '<div class="card muted">No games yet.</div>'}`;
@@ -911,6 +934,39 @@
       await api(`/api/reels/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
       trackEvent('reel_like'); await loadAux(); renderReels(); return;
     }
+    if (e.target.closest('[data-reel-comment]') && state.user) {
+      const id = e.target.closest('[data-reel-comment]').dataset.reelComment;
+      const content = prompt('Add a comment:');
+      if (content) {
+        await api(`/api/reels/${id}/comment`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
+        trackEvent('reel_comment'); await loadAux(); renderReels();
+      }
+      return;
+    }
+    if (e.target.closest('[data-reel-share]') && state.user) {
+      const id = e.target.closest('[data-reel-share]').dataset.reelShare;
+      await api(`/api/reels/${id}/share`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('reel_share'); await loadAux(); renderReels(); return;
+    }
+    if (e.target.closest('[data-reel-save]') && state.user) {
+      const id = e.target.closest('[data-reel-save]').dataset.reelSave;
+      await api(`/api/reels/${id}/save`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('reel_save'); await loadAux(); renderReels(); return;
+    }
+    if (e.target.closest('[data-reel-insights]') && state.user) {
+      const id = e.target.closest('[data-reel-insights]').dataset.reelInsights;
+      const data = await api(`/api/reels/${id}/insights`).catch(err=>alert(err.message));
+      if (data) alert(`Reel Insights: ${data.views} views, ${data.likes} likes, ${data.shares} shares, ${data.saves} saves, ${data.comments} comments`);
+      return;
+    }
+    if (e.target.closest('[data-reels-view]') && state.user) {
+      const view = e.target.closest('[data-reels-view]').dataset.reelsView;
+      if (view === 'discovery') {
+        const data = await api('/api/reels?discovery=true').catch(err=>alert(err.message));
+        if (data) { state.reels = data; renderReels(); }
+      }
+      return;
+    }
     if (e.target.closest('[data-page-like]') && state.user) {
       const id = e.target.closest('[data-page-like]').dataset.pageLike;
       await api(`/api/pages/${id}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
@@ -995,14 +1051,22 @@
       await api(`/api/groups/${state.activeGroupId}/posts`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
       e.target.reset(); await loadGroupPosts(); renderGroups(); return;
     }
-    const chatForm = e.target.closest('[data-send-chat]');
-    if (chatForm) {
-      e.preventDefault();
-      const content = chatForm.querySelector('input').value.trim(); if (!content) return;
-      await api('/api/messages', { method:'POST', body: JSON.stringify({ fromId: state.user.id, toId: chatForm.dataset.sendChat, content }) }).catch(err=>alert(err.message));
-      chatForm.reset(); await loadAux(); renderMessengerPage(); renderMessengerOverlay(); return;
-    }
-  });
+const chatForm = e.target.closest('[data-send-chat]');
+      if (chatForm) {
+        e.preventDefault();
+        const content = chatForm.querySelector('input').value.trim(); if (!content) return;
+        await api('/api/messages', { method:'POST', body: JSON.stringify({ fromId: state.user.id, toId: chatForm.dataset.sendChat, content }) }).catch(err=>alert(err.message));
+        chatForm.reset(); await loadAux(); renderMessengerPage(); renderMessengerOverlay(); return;
+      }
+      if (e.target.id === 'reelForm' && state.user) {
+        e.preventDefault();
+        const payload = Object.fromEntries(new FormData(e.target));
+        payload.userId = state.user.id;
+        payload.hashtags = (payload.hashtags||'').split(',').map(s=>s.trim()).filter(Boolean);
+        await api('/api/reels', { method:'POST', body: JSON.stringify(payload) }).catch(err=>alert(err.message));
+        trackEvent('reel_create'); e.target.reset(); await loadAux(); renderReels(); return;
+      }
+    });
 
   renderAuth();
   applyTheme();
