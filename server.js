@@ -18,7 +18,7 @@ function readDB() {
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(raw);
   } catch (e) {
-    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [] };
+    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [] };
   }
 }
 
@@ -255,6 +255,25 @@ app.post('/api/messages', (req, res) => {
   db.notifications.push({ id: uid('n'), userId: toId, type: 'message', actorId: fromId, read: false, createdAt: new Date().toISOString() });
   writeDB(db);
   res.status(201).json(msg);
+});
+
+// Stories (Phase 11)
+app.get('/api/stories', (req, res) => {
+  const db = readDB();
+  const now = Date.now();
+  const stories = (db.stories || []).filter(s => now - new Date(s.createdAt).getTime() < 24 * 60 * 60 * 1000)
+    .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  res.json(stories);
+});
+app.post('/api/stories', (req, res) => {
+  const { userId, text, bg } = req.body || {};
+  if (!userId || !text) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const story = { id: uid('s'), userId, text: String(text).slice(0, 180), bg: String(bg || '#1877f2').slice(0, 120), createdAt: new Date().toISOString() };
+  db.stories = db.stories || [];
+  db.stories.push(story);
+  writeDB(db);
+  res.status(201).json(story);
 });
 
 // SPA-ish fallback for hash routing / direct loads

@@ -5,6 +5,7 @@
     theme: localStorage.getItem('fb_theme') || 'light',
     users: [],
     posts: [],
+    stories: [],
     notifications: [],
     groups: [],
     conversations: [],
@@ -49,6 +50,14 @@
     if (token) localStorage.setItem('fb_token', token); else localStorage.removeItem('fb_token');
   $('#themeBtn')?.addEventListener('click', toggleTheme);
   $('#themeMenuBtn')?.addEventListener('click', () => { toggleTheme(); $('#accountMenu').classList.add('hidden'); });
+
+  $('#storyForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = new FormData(e.target).get('text');
+    if (!String(text||'').trim()) return;
+    await api('/api/stories', { method:'POST', body: JSON.stringify({ userId: state.user.id, text, bg: 'linear-gradient(135deg,#1877f2,#42b72a)' }) }).catch(err=>alert(err.message));
+    e.target.reset(); await loadAux(); renderStories();
+  });
 
   renderAuth();
   applyTheme();
@@ -134,7 +143,18 @@
       </article>`;
   }
 
+  function renderStories() {
+    const rail = $('#storiesRail');
+    if (!rail) return;
+    const mineFirst = [...state.stories].sort((a,b)=> (a.userId===state.user.id?-1:0) - (b.userId===state.user.id?-1:0));
+    rail.innerHTML = mineFirst.length ? mineFirst.map(s => {
+      const u = userById(s.userId);
+      return `<div class="story" style="background:${esc(s.bg || 'linear-gradient(135deg,#1877f2,#42b72a)')}"><div class="story-user">${esc(u.name)}</div><div class="story-text">${esc(s.text)}</div></div>`;
+    }).join('') : '<div class="muted">No stories in the last 24 hours.</div>';
+  }
+
   function renderPosts() {
+    renderStories();
     const container = $('#postsContainer');
     if (!state.posts.length) {
       container.innerHTML = `<div class="card muted">No posts yet. Be the first to post.</div>`;
@@ -240,9 +260,12 @@
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
   function renderSearch() {
-    const q = state.searchQuery.toLowerCase();
+    const q = state.searchQuery.toLowerCase().trim();
+    const meta = $('#searchMeta');
+    if (!q) { meta.textContent = 'Type in the top search box and press Enter.'; $('#searchResults').innerHTML = ''; return; }
     const users = state.users.filter(u => (u.name||'').toLowerCase().includes(q));
     const posts = state.posts.filter(p => (p.content||'').toLowerCase().includes(q));
+    meta.textContent = `Query: "${state.searchQuery}" · ${users.length} people · ${posts.length} posts`;
     $('#searchResults').innerHTML = `
       <div class="section-title">People</div>
       ${users.map(u=>`<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>`).join('') || '<div class="muted">No people found.</div>'}
@@ -263,6 +286,7 @@
     try { state.notifications = await api(`/api/notifications?userId=${encodeURIComponent(state.user.id)}`); } catch { state.notifications = []; }
     try { state.groups = await api('/api/groups'); } catch { state.groups = []; }
     try { state.messages = await api(`/api/messages?userId=${encodeURIComponent(state.user.id)}`); } catch { state.messages = []; }
+    try { state.stories = await api('/api/stories'); } catch { state.stories = []; }
     renderNotifications();
   }
   async function loadFeed() {

@@ -69,6 +69,16 @@
 
         <div id="mainView">
           <div id="homeView">
+            <div class="card stories-card">
+              <div class="row space-between">
+                <h3>Stories</h3>
+                <form id="storyForm" class="row gap story-form">
+                  <input name="text" placeholder="Create a text story..." maxlength="180" />
+                  <button class="btn small primary" type="submit">Share</button>
+                </form>
+              </div>
+              <div id="storiesRail" class="stories-rail"></div>
+            </div>
             <div class="card composer" id="composerCard">
               <div class="row">
                 <span class="avatar-sm" id="composerAvatar">U</span>
@@ -128,7 +138,11 @@
           </div>
 
           <div id="searchView" class="hidden">
-            <div class="card"><h3>Search Results</h3><div id="searchResults"></div></div>
+            <div class="card">
+              <h3>Search Results</h3>
+              <p id="searchMeta" class="muted"></p>
+              <div id="searchResults"></div>
+            </div>
           </div>
         </div>
       </section>

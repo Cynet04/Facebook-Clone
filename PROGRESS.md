@@ -6,3 +6,5 @@
 - 2026-11-09: Implemented Phase 4–8 MVP across backend/frontend (profiles edit/view, friends requests/accept, messenger polling + overlay/page, groups create/join/list, notifications generation/read). `node --test` passing. Preparing commit; push expected to fail on placeholder remote.
 - 2026-11-09: Implemented Phase 9 Dark Mode (CSS variables, navbar/menu toggle, localStorage persistence, input/theme polish). `node --test` and `node -c public/js/app.js` passing. Committing next; push likely to fail on placeholder remote.
 - 2026-11-09: Implemented Phase 10 Reactions MVP (`/api/posts/:id/react`, reaction picker UI, reaction summary, legacy like compatibility). Tests/syntax passing. Push attempts continue against placeholder remote and are logged when failing.
+- 2026-11-09: Updated `origin` remote to `https://github.com/Cynet04/Facebook-Clone.git`.
+- 2026-11-09: Implemented Phase 11 Search & Stories MVP (search meta/no-query state, stories API + 24h filter, home stories rail + create story). Tests/syntax passing; committing and pushing to updated remote.

@@ -63,9 +63,16 @@
 - [x] Render reaction counts/summary
 - [x] Backward compatibility with legacy likes
 
-## Phase 11+: Infinite
-- [ ] Search enhancements (highlight, recent searches)
+## Phase 11: Search & Stories MVP
+- [x] Search: show grouped results count and preserve query
+- [x] Search: add "no query" state and Enter hint polish
+- [x] Stories: add stories data model/API (mock)
+- [x] Stories: render stories rail on home feed
+- [x] Stories: allow creating a text story
+
+## Phase 12+: Infinite
+- [ ] Group feed/posts (dedicated)
 - [ ] Media uploads (mock URLs)
-- [ ] Stories
 - [ ] Marketplace stub
+- [ ] Privacy/settings mock
 - [ ] ...continue indefinitely
