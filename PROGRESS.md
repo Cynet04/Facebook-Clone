@@ -12,3 +12,4 @@
 - 2026-11-09: Implemented Phase 13 mock media URLs for posts (optional `imageUrl` with http(s) validation, composer field, feed/profile/search rendering). Tests/syntax passing. Committing/pushing to `origin/main`.
 - 2026-11-09: Implemented Phase 14 Marketplace stub (DB/API for mock listings, nav/view, create listing form, listings grid). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 15 Bookmarks/Saved Posts (`/api/users/:id/save` toggle, Save button on posts, Saved view). Tests/syntax passing; pushed to `origin/main`.
+- 2026-11-09: Implemented Phase 16 Settings & Privacy mock (Settings view, localStorage-persisted audience/privacy toggles, session panel, profile audience label). Tests/syntax passing; committing/pushing to `origin/main`.

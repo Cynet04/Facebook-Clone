@@ -3,6 +3,7 @@
     user: JSON.parse(localStorage.getItem('fb_user') || 'null'),
     token: localStorage.getItem('fb_token') || '',
     theme: localStorage.getItem('fb_theme') || 'light',
+    settings: JSON.parse(localStorage.getItem('fb_settings') || '{"audience":"public","showEmail":false,"allowRequests":true,"storySharing":true}'),
     users: [],
     posts: [],
     stories: [],
@@ -89,7 +90,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','saved'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','saved','settings'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -98,6 +99,7 @@
     if (state.view === 'messenger') renderMessengerPage();
     if (state.view === 'marketplace') renderMarketplace();
     if (state.view === 'saved') renderSaved();
+    if (state.view === 'settings') renderSettings();
     if (state.view === 'search') renderSearch();
   }
 
@@ -179,7 +181,7 @@
     $('#profileName').textContent = u.name || 'User';
     $('#profileAvatar').textContent = initials(u.name);
     $('#profileBio').textContent = u.bio || '';
-    $('#profileSub').textContent = `${(u.friends||[]).length} friends`;
+    $('#profileSub').textContent = `${(u.friends||[]).length} friends${state.settings.showEmail && u.email ? ` · ${u.email}` : ''} · ${audienceLabel(state.settings.audience)}`;
     if (u.cover) $('#profileCover').style.background = u.cover;
     const reqSent = (u.friendRequests || []).includes(me.id);
     const reqIncoming = (me.friendRequests || []).includes(u.id);
@@ -292,6 +294,17 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
+  function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
+  function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
+  function renderSettings() {
+    const f = $('#settingsForm'); if (!f) return;
+    f.audience.value = state.settings.audience || 'public';
+    f.showEmail.checked = !!state.settings.showEmail;
+    f.allowRequests.checked = state.settings.allowRequests !== false;
+    f.storySharing.checked = state.settings.storySharing !== false;
+    $('#sessionInfo').innerHTML = state.user ? `<div><strong>${esc(state.user.name)}</strong></div><div class="muted">${esc(state.user.email)}</div><div class="muted">Theme: ${esc(state.theme)}</div><div class="muted">Audience label: ${esc(audienceLabel(state.settings.audience))}</div>` : '<div class="muted">Not signed in.</div>';
+  }
+
   function renderMarketplace() {
     const el = $('#marketplaceList');
     if (!el) return;
@@ -400,6 +413,14 @@
     if (e.key !== 'Enter') return;
     state.searchQuery = e.target.value.trim();
     state.view = 'search'; renderView();
+  });
+
+  $('#settingsForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    saveSettings({ audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked });
+    $('#settingsMsg').textContent = 'Settings saved locally (mock).';
+    renderProfile(); renderSettings();
   });
 
   $('#marketplaceForm')?.addEventListener('submit', async (e) => {

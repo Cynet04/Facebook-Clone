@@ -31,6 +31,7 @@
         <div class="dropdown hidden" id="accountMenu">
           <div id="accountInfo" class="menu-item"></div>
           <button data-view="profile" class="menu-item">Profile</button>
+          <button data-view="settings" class="menu-item">Settings & Privacy</button>
           <button id="themeMenuBtn" class="menu-item">Toggle Dark Mode</button>
           <button id="logoutBtn" class="menu-item">Log Out</button>
         </div>
@@ -173,6 +174,27 @@
 
           <div id="savedView" class="hidden">
             <div class="card"><h3>Saved Posts</h3><div id="savedPosts"></div></div>
+          </div>
+
+          <div id="settingsView" class="hidden">
+            <div class="card">
+              <h3>Settings & Privacy (Mock)</h3>
+              <form id="settingsForm" class="stack">
+                <label class="field"><span>Default post audience label</span>
+                  <select name="audience">
+                    <option value="public">Public</option>
+                    <option value="friends">Friends</option>
+                    <option value="only_me">Only me</option>
+                  </select>
+                </label>
+                <label class="check"><input type="checkbox" name="showEmail" /> Show email on profile</label>
+                <label class="check"><input type="checkbox" name="allowRequests" /> Allow friend requests</label>
+                <label class="check"><input type="checkbox" name="storySharing" /> Allow story sharing</label>
+                <button class="btn primary small" type="submit">Save Settings</button>
+              </form>
+              <p id="settingsMsg" class="muted"></p>
+            </div>
+            <div class="card"><h3>Account / Session</h3><div id="sessionInfo"></div></div>
           </div>
         </div>
       </section>

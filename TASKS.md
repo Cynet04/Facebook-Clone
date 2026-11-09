@@ -98,9 +98,16 @@
 - [x] Persist saved state and render indicators
 - [x] Verify and commit
 
-## Phase 16+: Infinite
-- [ ] Privacy/settings mock
+## Phase 16: Settings & Privacy (Mock)
+- [x] Add Settings view (profile basics, privacy toggles mock)
+- [x] Persist mock settings in localStorage
+- [x] Add "Who can see your posts" UI state (mock enforcement in UI labels)
+- [x] Add account/session info panel
+- [x] Verify and commit
+
+## Phase 17+: Infinite
 - [ ] Pagination/infinite scroll mock
 - [ ] Admin/moderation stubs
 - [ ] PWA/offline stub
+- [ ] Comment replies/reactions
 - [ ] ...continue indefinitely
