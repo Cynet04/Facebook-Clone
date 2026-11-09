@@ -56,5 +56,17 @@
       "rsvps": [],
       "createdAt": "2026-11-09T10:48:43.895Z"
     }
+  ],
+  "fundraisers": [
+    {
+      "id": "fr1",
+      "title": "Local Shelter Support (mock)",
+      "goal": 1000,
+      "raised": 250,
+      "organizerUserId": "u1",
+      "description": "Mock fundraiser",
+      "donors": [],
+      "createdAt": "2026-11-09T10:56:40.557Z"
+    }
   ]
 }

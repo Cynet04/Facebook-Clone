@@ -308,9 +308,16 @@
 - [x] Handle empty states
 - [x] Verify and commit
 
-## Phase 46+: Infinite
-- [ ] Fundraisers stub
+## Phase 46: Fundraisers Stub
+- [ ] Add `/api/fundraisers` mock endpoints and seed data
+- [ ] Add Fundraisers nav/view with create + donate mock actions
+- [ ] Show progress bars/goals and recent donations count
+- [ ] Track fundraiser interactions via analytics
+- [ ] Verify and commit
+
+## Phase 47+: Infinite
 - [ ] Pages stub
 - [ ] Saved collections/folders
 - [ ] Reels stub
+- [ ] Gaming stub
 - [ ] ...continue indefinitely
