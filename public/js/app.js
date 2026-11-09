@@ -209,6 +209,7 @@
         ${(p.pinned || p.highlighted) ? `<div class="post-flags">${p.pinned?'<span class="pill">Pinned</span>':''}${p.highlighted?'<span class="pill">Highlight</span>':''}</div>` : ''}
         ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
         <div class="post-body" id="post-body-${esc(p.id)}">${richText(p.content)}</div>
+        ${linkPreviewHtml(p.content)}
         <form class="post-edit hidden stack" id="post-edit-${esc(p.id)}" data-edit-form="${esc(p.id)}"><textarea name="content" maxlength="5000">${esc(p.content)}</textarea><div class="row gap"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-post="${esc(p.id)}">Cancel</button></div></form>
         ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>

@@ -266,9 +266,16 @@
 - [x] Track hashtag/mention interactions via analytics
 - [x] Verify and commit
 
-## Phase 40+: Infinite
-- [ ] Link previews mock
+## Phase 40: Link Previews (Mock)
+- [x] Detect first URL in post content
+- [x] Render mock link preview card (domain/title placeholder/favicon-style)
+- [x] Add URL safety checks for preview rendering
+- [x] Cache preview metadata client-side in-memory/localStorage mock
+- [x] Verify and commit
+
+## Phase 41+: Infinite
 - [ ] Poll posts
 - [ ] Watch/videos stub
 - [ ] Memories/on-this-day
+- [ ] Events stub
 - [ ] ...continue indefinitely
