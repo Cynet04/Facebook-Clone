@@ -89,11 +89,11 @@ app.patch('/api/users/:id', (req, res) => {
   const db = readDB();
   const user = db.users.find(u => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'Not found' });
-  const { name, avatar, cover, bio } = req.body || {};
-  if (name !== undefined) user.name = String(name).slice(0, 80);
-  if (avatar !== undefined) user.avatar = String(avatar).slice(0, 500);
-  if (cover !== undefined) user.cover = String(cover).slice(0, 500);
-  if (bio !== undefined) user.bio = String(bio).slice(0, 280);
+  const { name, avatar, cover, bio, work, education, location, relationship, website, about } = req.body || {};
+  const set = (k, v, n=200) => { if (v !== undefined) user[k] = String(v).slice(0, n); };
+  set('name', name, 80); set('avatar', avatar, 500); set('cover', cover, 500); set('bio', bio, 280);
+  set('work', work, 120); set('education', education, 120); set('location', location, 120);
+  set('relationship', relationship, 80); set('website', website, 200); set('about', about, 1000);
   writeDB(db);
   const { password, ...safe } = user;
   safe.savedPosts = safe.savedPosts || [];

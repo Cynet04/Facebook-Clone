@@ -293,6 +293,8 @@
     $('#profileAvatar').textContent = initials(u.name);
     $('#profileBio').textContent = u.bio || '';
     $('#profileSub').textContent = `${(u.friends||[]).length} friends${state.settings.showEmail && u.email ? ` · ${u.email}` : ''} · ${audienceLabel(state.settings.audience)}`;
+    const about = [['Work',u.work],['Education',u.education],['Location',u.location],['Relationship',u.relationship],['Website',u.website]].filter(([,v])=>v && String(v).trim());
+    $('#profileAbout').innerHTML = (u.about ? `<p>${esc(u.about)}</p>` : '') + (about.length ? `<div class="about-grid">${about.map(([k,v])=>`<div><strong>${esc(k)}:</strong> ${k==='Website' ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</div>`).join('')}</div>` : (!u.about ? '<div class="muted">No additional details yet.</div>' : ''));
     if (u.cover) $('#profileCover').style.background = u.cover;
     const reqSent = (u.friendRequests || []).includes(me.id);
     const reqIncoming = (me.friendRequests || []).includes(u.id);
@@ -308,7 +310,7 @@
     $('#profileEditCard').classList.toggle('hidden', !(isMe && state._editingProfile));
     if (isMe) {
       const f = $('#profileEditForm');
-      f.name.value = u.name || ''; f.bio.value = u.bio || ''; f.cover.value = u.cover || '';
+      ['name','bio','work','education','location','relationship','website','about','cover'].forEach(k => { if (f[k]) f[k].value = u[k] || ''; });
     }
     const mine = visiblePosts().filter(p => p.userId === id).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt||0)-new Date(a.createdAt||0));
     $('#profilePosts').innerHTML = mine.length ? mine.map(p => postCard(p)).join('') : `<div class="card muted">No posts on this timeline yet.</div>`;

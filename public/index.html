@@ -124,11 +124,21 @@
                 </div>
               </div>
             </div>
+            <div id="profileAboutCard" class="card">
+              <h3>About</h3>
+              <div id="profileAbout"></div>
+            </div>
             <div id="profileEditCard" class="card hidden">
               <h3>Edit profile</h3>
               <form id="profileEditForm" class="stack">
                 <input name="name" placeholder="Name" maxlength="80" />
                 <input name="bio" placeholder="Bio" maxlength="280" />
+                <input name="work" placeholder="Work" maxlength="120" />
+                <input name="education" placeholder="Education" maxlength="120" />
+                <input name="location" placeholder="Location" maxlength="120" />
+                <input name="relationship" placeholder="Relationship" maxlength="80" />
+                <input name="website" placeholder="Website (https://...)" maxlength="200" />
+                <textarea name="about" placeholder="About details" maxlength="1000" rows="3"></textarea>
                 <input name="cover" placeholder="Cover CSS/color (e.g. #1877f2 or linear-gradient(...))" maxlength="500" />
                 <button class="btn primary small" type="submit">Save</button>
               </form>

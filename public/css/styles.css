@@ -115,6 +115,9 @@ hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
 .post-menu button { width: 100%; border: none; background: transparent; text-align: left; padding: 10px; cursor: pointer; }
 .post-menu button:hover { background: var(--input); }
 .post-flags { display:flex; gap:6px; margin: 4px 0 8px; }
+.about-grid { display:grid; gap:6px; margin-top:8px; }
+.about-grid a { color: var(--blue); }
+textarea { font: inherit; }
 .post-edit textarea { width: 100%; min-height: 90px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--card); color: var(--text); resize: vertical; }
 .post-author { font-weight: 600; }
 .post-time { font-size: 12px; color: var(--muted); }
