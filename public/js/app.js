@@ -859,4 +859,22 @@
     if (!activeViews.includes(state.view)) return;
     loadAux().then(() => { state.lastUpdatedAt = new Date().toISOString(); renderView(); renderStatus(); }).catch(()=>{});
   }, 20000);
+  document.addEventListener('submit', (e) => {
+    if (e.target?.id === 'savedCollectionForm' && state.user) {
+      e.preventDefault();
+      const name = String(new FormData(e.target).get('name')||'').trim();
+      if (!name) return;
+      const m = savedCollections(); m.collections = m.collections || {};
+      m.collections['col_' + Math.random().toString(36).slice(2,8)] = name.slice(0,40); saveCollectionsModel(m);
+      trackEvent('saved_collection_create'); e.target.reset(); renderSaved();
+    }
+  });
+  document.addEventListener('change', (e) => {
+    const sel = e.target?.closest?.('[data-saved-collection]');
+    if (sel) {
+      const m = savedCollections(); m.assign = m.assign || {};
+      if (sel.value === '_none') delete m.assign[sel.dataset.savedCollection]; else m.assign[sel.dataset.savedCollection] = sel.value;
+      saveCollectionsModel(m); trackEvent('saved_collection_assign'); renderSaved();
+    }
+  });
 })();
