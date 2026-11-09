@@ -12,7 +12,7 @@
     postsLoading: false,
     stories: [],
     scheduledStories: [],
-    marketplace: [],
+      videos: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -129,7 +129,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -137,6 +137,7 @@
     if (state.view === 'groups') renderGroups();
     if (state.view === 'messenger') renderMessengerPage();
     if (state.view === 'marketplace') renderMarketplace();
+    if (state.view === 'watch') renderWatch();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -423,7 +424,9 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
-  function renderMarketplace() {
+  function renderWatch() {
+    $('#watchView').innerHTML = `<div class="card"><h2>Watch</h2><p class="muted">Videos stub (mock player/cards)</p></div>${(state.videos||[]).map(v=>`<div class="card video-card"><div class="muted">${esc(v.channel||'Channel')} · ${esc(String(v.views||0))} views</div><h3>${esc(v.title||'Video')}</h3><video controls preload="metadata" src="${esc(v.url||'')}" style="width:100%;max-height:360px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-watch-like="${esc(v.id)}">👍 ${(v.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No videos.</div>'}`;
+  }
     const el = $('#marketplaceList');
     if (!el) return;
     el.innerHTML = state.marketplace.length ? state.marketplace.map(m => `
@@ -487,6 +490,7 @@
       state.scheduledStories = (allStories || []).filter(s => s.status === 'scheduled' && s.userId === state.user.id);
     } catch { state.stories = []; state.scheduledStories = []; }
     try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
+    try { state.videos = await api('/api/videos'); } catch { state.videos = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
@@ -676,6 +680,8 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    const watchLike = e.target.closest('[data-watch-like]');
+    if (watchLike && state.user) { await api(`/api/videos/${watchLike.dataset.watchLike}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); trackEvent('watch_like'); await loadAux(); renderWatch(); return; }
     const pollVote = e.target.closest('[data-poll-vote]');
     if (pollVote && state.user) { await api(`/api/posts/${pollVote.dataset.pollVote}/poll/vote`, { method:'POST', body: JSON.stringify({ userId: state.user.id, optionId: pollVote.dataset.optionId }) }).catch(err=>alert(err.message)); trackEvent('poll_vote'); await loadFeed(); return; }
     const hash = e.target.closest('[data-hashtag]');

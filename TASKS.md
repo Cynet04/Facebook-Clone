@@ -280,9 +280,16 @@
 - [x] Persist votes per user and show percentages/counts
 - [x] Verify and commit
 
-## Phase 42+: Infinite
-- [ ] Watch/videos stub
+## Phase 42: Watch / Videos Stub
+- [x] Add `/api/videos` mock endpoints and `videos` collection seed
+- [x] Add Watch view shell with video cards/player placeholder
+- [x] Seed/sample videos and basic like/save mock interactions
+- [x] Track watch interactions via analytics
+- [x] Verify and commit
+
+## Phase 43+: Infinite
 - [ ] Memories/on-this-day
 - [ ] Events stub
 - [ ] Birthdays stub
+- [ ] Fundraisers stub
 - [ ] ...continue indefinitely
