@@ -218,11 +218,11 @@
 - [x] Verify and commit
 
 ## Phase 33: Scheduled Posts (Mock)
-- [ ] Add scheduled post fields/API (`scheduledFor`, status) with mock scheduler check
-- [ ] Add schedule option in composer UI (datetime-local)
-- [ ] Show scheduled posts in a "Scheduled" section (owner-only mock view)
-- [ ] Publish due scheduled posts on load/poll (client-side mock trigger)
-- [ ] Verify and commit
+- [x] Add scheduled post fields/API (`scheduledFor`, status) with mock scheduler check
+- [x] Add schedule option in composer UI (datetime-local)
+- [x] Show scheduled posts in a "Scheduled" section (owner-only mock view)
+- [x] Publish due scheduled posts on load/poll (client-side mock trigger)
+- [x] Verify and commit
 
 ## Phase 34+: Infinite
 - [ ] Scheduled stories mock

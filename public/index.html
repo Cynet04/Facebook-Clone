@@ -95,13 +95,16 @@
                 <span class="avatar-sm" id="composerAvatar">U</span>
                 <input id="postInput" placeholder="What's on your mind?" />
               </div>
-              <div class="row composer-media-row">
+              <div class="row composer-media-row gap">
                 <input id="postImageInput" placeholder="Image URL (optional, https://...)" />
+                <input id="postScheduleInput" type="datetime-local" title="Schedule post (optional)" aria-label="Schedule post" />
               </div>
-              <div class="composer-actions">
+              <div class="composer-actions row gap" style="justify-content:flex-end">
+                <button id="schedulePostBtn" class="btn small">Schedule</button>
                 <button id="postBtn" class="btn primary small">Post</button>
               </div>
             </div>
+            <div id="scheduledPostsCard" class="card hidden"><h3>Scheduled Posts</h3><div id="scheduledPostsList"></div></div>
             <div id="postsContainer"></div>
           </div>
 

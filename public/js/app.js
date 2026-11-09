@@ -12,6 +12,7 @@
     postsLoading: false,
     stories: [],
     marketplace: [],
+    scheduledPosts: [],
     reports: [],
     notifications: [],
     groups: [],
@@ -248,8 +249,16 @@
     }).join('') : '<div class="muted">No stories in the last 24 hours.</div>';
   }
 
+  function renderScheduled() {
+    const card = $('#scheduledPostsCard'); const list = $('#scheduledPostsList'); if (!card || !list) return;
+    if (!state.scheduledPosts.length) { card.classList.add('hidden'); list.innerHTML = ''; return; }
+    card.classList.remove('hidden');
+    list.innerHTML = state.scheduledPosts.map(p => `<div class="list-row"><span><strong>Scheduled</strong> <span class="muted">· ${esc(new Date(p.scheduledFor).toLocaleString())}</span><div>${esc(p.content)}</div></span><span class="pill">Owner only</span></div>`).join('');
+  }
+
   function renderPosts() {
     renderStories();
+    renderScheduled();
     const container = $('#postsContainer');
     const posts = visiblePosts();
     if (!posts.length) {
@@ -499,15 +508,23 @@
     if (view === 'messenger') renderMessengerPage();
   }));
 
-  $('#postBtn').addEventListener('click', async () => {
+  async function submitPost(scheduled=false) {
     const input = $('#postInput'); const content = input.value.trim();
     const imageUrl = ($('#postImageInput')?.value || '').trim();
+    const scheduledFor = ($('#postScheduleInput')?.value || '').trim();
     if (!content || !state.user) return;
     if (imageUrl && !/^https?:\/\//i.test(imageUrl)) { alert('Image URL must start with http(s)://'); return; }
-    await api('/api/posts', { method: 'POST', body: JSON.stringify({ userId: state.user.id, content, imageUrl }) }).catch(e=>alert(e.message));
-    trackEvent('post_create', { hasImage: !!imageUrl });
-    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed(true);
-  });
+    const payload = { userId: state.user.id, content, imageUrl };
+    if (scheduled) {
+      if (!scheduledFor) { alert('Pick a schedule time'); return; }
+      payload.scheduledFor = new Date(scheduledFor).toISOString();
+    }
+    await api('/api/posts', { method: 'POST', body: JSON.stringify(payload) }).catch(e=>alert(e.message));
+    trackEvent(scheduled ? 'post_schedule' : 'post_create', { hasImage: !!imageUrl });
+    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; if ($('#postScheduleInput')) $('#postScheduleInput').value = ''; await loadFeed(true);
+  }
+  $('#postBtn').addEventListener('click', () => submitPost(false));
+  $('#schedulePostBtn')?.addEventListener('click', () => submitPost(true));
 
   $('#globalSearch').addEventListener('input', (e) => {
     clearTimeout(state.searchTimer);

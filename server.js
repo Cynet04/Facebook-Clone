@@ -112,22 +112,47 @@ app.post('/api/users/:id/save', (req, res) => {
   res.json({ savedPosts: user.savedPosts });
 });
 
+function publishDueScheduled(db) {
+  const now = Date.now();
+  let changed = false;
+  (db.posts || []).forEach(p => {
+    if (p.status === 'scheduled' && p.scheduledFor && new Date(p.scheduledFor).getTime() <= now) {
+      p.status = 'published';
+      p.createdAt = new Date().toISOString();
+      delete p.scheduledFor;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 // Posts
 app.get('/api/posts', (req, res) => {
   const db = readDB();
-  const posts = [...(db.posts || [])].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const includeScheduled = req.query.includeScheduled === '1';
+  const userId = req.query.userId;
+  const changed = publishDueScheduled(db);
+  if (changed) writeDB(db);
+  let posts = [...(db.posts || [])].filter(p => (p.status || 'published') === 'published' || (includeScheduled && userId && p.userId === userId && p.status === 'scheduled'));
+  posts.sort((a, b) => new Date(b.createdAt || b.scheduledFor || 0) - new Date(a.createdAt || a.scheduledFor || 0));
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0), 100);
   const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
   if (!limit && !offset) return res.json(posts);
   res.json({ items: posts.slice(offset, offset + limit), total: posts.length, offset, limit });
 });
 app.post('/api/posts', (req, res) => {
-  const { userId, content, imageUrl } = req.body || {};
+  const { userId, content, imageUrl, scheduledFor } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const img = String(imageUrl || '').trim();
   if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
+  let sched = null;
+  if (scheduledFor) {
+    const t = new Date(scheduledFor).getTime();
+    if (!Number.isFinite(t) || t <= Date.now() + 30 * 1000) return res.status(400).json({ error: 'scheduledFor must be > 30s in future' });
+    sched = new Date(t).toISOString();
+  }
   const db = readDB();
-  const post = { id: uid('p'), userId, content: String(content).slice(0, 5000), imageUrl: img.slice(0, 500), likes: [], reactions: {}, createdAt: new Date().toISOString() };
+  const post = { id: uid('p'), userId, content: String(content).slice(0, 5000), imageUrl: img.slice(0, 500), likes: [], reactions: {}, shares: 0, status: sched ? 'scheduled' : 'published', createdAt: sched ? null : new Date().toISOString(), ...(sched ? { scheduledFor: sched } : {}) };
   db.posts = db.posts || [];
   db.posts.push(post);
   writeDB(db);
