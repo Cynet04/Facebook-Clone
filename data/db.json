@@ -143,5 +143,19 @@
       "shares": 0,
       "createdAt": "2026-11-09T11:48:57.447Z"
     }
+  ],
+  "weatherAlerts": [
+    {
+      "id": "wa1",
+      "type": "severe",
+      "title": "Severe Thunderstorm Warning (mock)",
+      "description": "Mock weather alert for demo.",
+      "severity": "high",
+      "areas": [
+        "Demo County"
+      ],
+      "expiresAt": "2026-11-09T12:52:09.757Z",
+      "createdAt": "2026-11-09T11:52:09.767Z"
+    }
   ]
 }

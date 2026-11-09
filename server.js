@@ -686,6 +686,25 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Weather stub (Phase 54) ----------
+app.get('/api/weather', (req, res) => { const db = readDB(); res.json((db.weatherAlerts || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/weather', writeLimit, (req, res) => {
+  const { userId, type, title, description, severity, areas } = req.body || {};
+  if (!userId || !String(title||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const a = { id: uid('wa'), type: String(type||'alert').slice(0,40), title: String(title).slice(0,120), description: String(description||'').slice(0,500), severity: String(severity||'medium').slice(0,20), areas: Array.isArray(areas) ? areas.map(String).slice(0,20) : [String(areas||'').slice(0,60)], expiresAt: new Date(Date.now()+3600000).toISOString(), createdAt: new Date().toISOString() };
+  db.weatherAlerts = db.weatherAlerts || []; db.weatherAlerts.push(a); writeDB(db); res.status(201).json(a);
+});
+app.post('/api/weather/:id/dismiss', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const a = (db.weatherAlerts || []).find(x => x.id === req.params.id);
+  if (!a) return res.status(404).json({ error: 'Alert not found' });
+  a.dismissedBy = a.dismissedBy || []; if (!a.dismissedBy.includes(userId)) a.dismissedBy.push(userId);
+  writeDB(db); res.json(a);
+});
+
 // ---------- Climate/Science Center stub (Phase 53) ----------
 app.get('/api/science', (req, res) => { const db = readDB(); res.json((db.sciencePosts || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/science', writeLimit, (req, res) => {
