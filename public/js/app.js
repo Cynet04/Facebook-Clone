@@ -518,13 +518,25 @@
     if (!el) return;
     if (!active) { el.innerHTML = '<div class="muted">No contacts available.</div>'; return; }
     const thread = messagesWith(active);
+    const activeUser = userById(active);
     el.innerHTML = `
       <div class="messenger ${compact?'compact':''}">
-        <div class="messenger-list">${users.map(u=>`<button class="thread ${u.id===active?'active':''}" data-chat-user="${esc(u.id)}"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></button>`).join('')}</div>
+        <div class="messenger-list">${users.map(u=>`<button class="thread ${u.id===active?'active':''}" data-chat-user="${esc(u.id)}"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span><span class="muted" style="font-size:10px">${u.active?'● Active':(u.lastSeen?`Seen ${esc(timeAgo(u.lastSeen))}`:'')}</span></button>`).join('')}</div>
         <div class="messenger-thread">
-          <div class="thread-head"><strong>${esc(userById(active).name)}</strong></div>
-          <div class="thread-msgs">${thread.map(m=>`<div class="bubble ${m.fromId===state.user.id?'me':'them'}">${esc(m.content)}</div>`).join('') || '<div class="muted">No messages yet.</div>'}</div>
-          <form class="thread-send" data-send-chat="${esc(active)}"><input name="content" placeholder="Write a message..." autocomplete="off" /><button class="btn primary small">Send</button></form>
+          <div class="thread-head row" style="justify-content:space-between;align-items:center"><strong>${esc(activeUser.name)}</strong><span class="muted" style="font-size:12px">${activeUser.active?'● Active':(activeUser.lastSeen?`Last seen ${esc(timeAgo(activeUser.lastSeen))}`:'')}</span></div>
+          <div class="thread-search row gap" style="margin:8px 0"><input type="text" placeholder="Search messages..." id="threadSearch" data-chat-user="${esc(active)}" /><button class="btn small" data-thread-search="${esc(active)}">Search</button></div>
+          <div class="thread-msgs">${thread.map(m=>{
+            if (m.deletedAt) return `<div class="bubble muted" style="text-align:center">Message deleted</div>`;
+            const reactions = m.reactions || {};
+            const myReaction = reactions[state.user?.id];
+            const reactionHtml = Object.entries(reactions).length ? `<div class="reactions row gap" style="margin-top:4px;font-size:12px">${Object.entries(reactions).map(([uid,r])=>`<span class="reaction ${uid===state.user?.id?'me':''}" data-msg-react="${esc(m.id)}" data-reaction="${esc(r)}">${esc(r)}</span>`).join('')}</div>` : '';
+            const replyHtml = m.replyTo ? `<div class="muted" style="font-size:11px;margin-bottom:4px">Replying to: ${esc((state.messages.find(x=>x.id===m.replyTo)||{content:''}).content.slice(0,40))}</div>` : '';
+            const editedHtml = m.editedAt ? `<span class="muted" style="font-size:10px">(edited)</span>` : '';
+            const isMe = m.fromId === state.user.id;
+            return `<div class="bubble ${isMe?'me':'them'}" data-msg-id="${esc(m.id)}">${replyHtml}${esc(m.content)}${editedHtml}${reactionHtml}${isMe ? `<div class="row gap" style="margin-top:4px;font-size:11px"><button class="btn small" data-msg-edit="${esc(m.id)}">Edit</button><button class="btn small" data-msg-delete="${esc(m.id)}">Delete</button></div>` : ''}</div>`;
+          }).join('') || '<div class="muted">No messages yet.</div>'}</div>
+          <form class="thread-send" data-send-chat="${esc(active)}"><input name="content" placeholder="Write a message..." autocomplete="off" /><button class="btn primary small" type="submit">Send</button><button type="button" class="btn small" data-voice-message="${esc(active)}">🎤</button><button type="button" class="btn small" data-video-call="${esc(active)}">📹</button></form>
+          <div class="reaction-picker" style="display:none;margin-top:8px">${['👍','❤️','😂','😮','😢','😡'].map(r=>`<button class="btn small" data-react-emoji="${esc(r)}">${esc(r)}</button>`).join('')}</div>
         </div>
       </div>`;
   }
@@ -1209,6 +1221,63 @@
     if (msgBtn) { state.activeChatUserId = msgBtn.dataset.messageUser; state.view = 'messenger'; renderView(); renderMessengerPage(); $('#messengerOverlay').classList.remove('hidden'); renderMessengerOverlay(); return; }
     const chat = e.target.closest('[data-chat-user]');
     if (chat) { state.activeChatUserId = chat.dataset.chatUser; renderMessengerPage(); renderMessengerOverlay(); return; }
+    const msgReact = e.target.closest('[data-msg-react]');
+    if (msgReact && state.user) {
+      const msgId = msgReact.dataset.msgReact;
+      const reaction = msgReact.dataset.reaction;
+      await api(`/api/messages/${msgId}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction }) }).catch(err=>alert(err.message));
+      trackEvent('message_react'); await loadAux(); renderMessengerPage(); renderMessengerOverlay(); return;
+    }
+    const msgEdit = e.target.closest('[data-msg-edit]');
+    if (msgEdit && state.user) {
+      const msgId = msgEdit.dataset.msgEdit;
+      const newContent = prompt('Edit message:');
+      if (newContent) {
+        await api(`/api/messages/${msgId}`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, content: newContent }) }).catch(err=>alert(err.message));
+        trackEvent('message_edit'); await loadAux(); renderMessengerPage(); renderMessengerOverlay();
+      }
+      return;
+    }
+    const msgDelete = e.target.closest('[data-msg-delete]');
+    if (msgDelete && state.user) {
+      const msgId = msgDelete.dataset.msgDelete;
+      if (confirm('Delete this message?')) {
+        await api(`/api/messages/${msgId}`, { method:'DELETE', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+        trackEvent('message_delete'); await loadAux(); renderMessengerPage(); renderMessengerOverlay();
+      }
+      return;
+    }
+    const voiceBtn = e.target.closest('[data-voice-message]');
+    if (voiceBtn && state.user) {
+      const toId = voiceBtn.dataset.voiceMessage;
+      const duration = prompt('Voice message duration (seconds):');
+      if (duration) {
+        await api('/api/messages', { method:'POST', body: JSON.stringify({ fromId: state.user.id, toId, content: `[Voice message: ${duration}s]`, type: 'voice', voiceDuration: Number(duration) }) }).catch(err=>alert(err.message));
+        trackEvent('voice_message'); await loadAux(); renderMessengerPage(); renderMessengerOverlay();
+      }
+      return;
+    }
+    const videoBtn = e.target.closest('[data-video-call]');
+    if (videoBtn && state.user) {
+      const toId = videoBtn.dataset.videoCall;
+      alert(`Starting video call with ${userById(toId).name} (mock)`);
+      trackEvent('video_call', { toId });
+      return;
+    }
+    const threadSearch = e.target.closest('[data-thread-search]');
+    if (threadSearch && state.user) {
+      const toId = threadSearch.dataset.threadSearch;
+      const query = $('#threadSearch')?.value || '';
+      if (query) {
+        const msgs = await api(`/api/messages?userId=${encodeURIComponent(state.user.id)}&withId=${encodeURIComponent(toId)}&search=${encodeURIComponent(query)}`).catch(err=>alert(err.message));
+        if (msgs) {
+          const active = state.activeChatUserId;
+          state.messages = msgs;
+          renderMessengerPage(); renderMessengerOverlay();
+        }
+      }
+      return;
+    }
     const openGroup = e.target.closest('[data-open-group]');
     if (openGroup) { e.preventDefault(); state.activeGroupId = openGroup.dataset.openGroup; await loadGroupPosts(); renderGroups(); return; }
     const join = e.target.closest('[data-join-group]');

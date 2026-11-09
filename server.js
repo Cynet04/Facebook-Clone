@@ -569,27 +569,78 @@ app.post('/api/groups/:id/posts', (req, res) => {
   writeDB(db); res.status(201).json(post);
 });
 
-// Messenger (Phase 6)
+// Messenger (Phase 6 + Phase 63 enhancements)
 app.get('/api/messages', (req, res) => {
-  const { userId } = req.query || {};
+  const { userId, withId, search, limit: lim } = req.query || {};
+  if (!userId) return res.json([]);
   const db = readDB();
-  const msgs = (db.messages || []).filter(m => !userId || m.fromId === userId || m.toId === userId);
-  res.json(msgs.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)));
+  let msgs = (db.messages || []).filter(m => (m.fromId === userId && m.toId === withId) || (m.fromId === withId && m.toId === userId));
+  if (search) msgs = msgs.filter(m => (m.content||'').toLowerCase().includes(String(search).toLowerCase()));
+  const limit = Math.min(200, Math.max(1, Number(lim)||100));
+  res.json(msgs.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)).slice(-limit));
 });
 app.post('/api/messages', writeLimit, (req, res) => {
-  const { fromId, toId, content } = req.body || {};
+  const { fromId, toId, content, type, replyTo, voiceDuration } = req.body || {};
   if (!fromId || !toId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
   const from = db.users.find(u => u.id === fromId);
   const to = db.users.find(u => u.id === toId);
   if (from && to && ((from.blockedUsers||[]).includes(toId) || (to.blockedUsers||[]).includes(fromId))) return res.status(403).json({ error: 'Blocked' });
-  const msg = { id: uid('m'), fromId, toId, content: String(content).slice(0, 2000), createdAt: new Date().toISOString() };
+  const msg = { id: uid('m'), fromId, toId, content: String(content).slice(0, 2000), type: type || 'text', replyTo: replyTo || null, voiceDuration: voiceDuration || null, reactions: {}, editedAt: null, deletedAt: null, createdAt: new Date().toISOString() };
   db.messages = db.messages || [];
   db.messages.push(msg);
   db.notifications = db.notifications || [];
   db.notifications.push({ id: uid('n'), userId: toId, type: 'message', actorId: fromId, read: false, createdAt: new Date().toISOString() });
   writeDB(db);
   res.status(201).json(msg);
+});
+app.patch('/api/messages/:id', writeLimit, (req, res) => {
+  const { userId, content } = req.body || {};
+  if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const msg = (db.messages || []).find(m => m.id === req.params.id);
+  if (!msg) return res.status(404).json({ error: 'Message not found' });
+  if (msg.fromId !== userId) return res.status(403).json({ error: 'Can only edit own messages' });
+  msg.content = String(content).slice(0, 2000);
+  msg.editedAt = new Date().toISOString();
+  writeDB(db); res.json(msg);
+});
+app.delete('/api/messages/:id', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const msg = (db.messages || []).find(m => m.id === req.params.id);
+  if (!msg) return res.status(404).json({ error: 'Message not found' });
+  if (msg.fromId !== userId) return res.status(403).json({ error: 'Can only delete own messages' });
+  msg.deletedAt = new Date().toISOString();
+  msg.content = 'This message was deleted';
+  writeDB(db); res.json(msg);
+});
+app.post('/api/messages/:id/react', writeLimit, (req, res) => {
+  const { userId, reaction } = req.body || {};
+  if (!userId || !reaction) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const msg = (db.messages || []).find(m => m.id === req.params.id);
+  if (!msg) return res.status(404).json({ error: 'Message not found' });
+  msg.reactions = msg.reactions || {};
+  msg.reactions[userId] = reaction;
+  writeDB(db); res.json(msg);
+});
+app.get('/api/users/:id/active', (req, res) => {
+  const db = readDB();
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ active: user.active || false, lastSeen: user.lastSeen || null });
+});
+app.post('/api/users/:id/active', writeLimit, (req, res) => {
+  const { userId, active } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.active = Boolean(active);
+  user.lastSeen = active ? null : new Date().toISOString();
+  writeDB(db); res.json(user);
 });
 
 // Stories (Phase 11/34)
