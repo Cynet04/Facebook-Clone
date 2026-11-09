@@ -174,9 +174,12 @@
           <div id="groupsView" class="hidden">
             <div class="card">
               <h3>Create Group</h3>
-              <form id="groupCreateForm" class="row gap">
-                <input name="name" placeholder="Group name" required />
-                <button class="btn primary small" type="submit">Create</button>
+              <form id="groupCreateForm" class="stack">
+                <input name="name" placeholder="Group name" required maxlength="120" />
+                <input name="category" placeholder="Category (e.g. Gaming, Tech, Sports)" maxlength="60" />
+                <textarea name="description" placeholder="Group description" maxlength="500"></textarea>
+                <textarea name="rules" placeholder="Group rules (optional)" maxlength="2000"></textarea>
+                <div><button class="btn primary small" type="submit">Create</button></div>
               </form>
             </div>
             <div class="card"><h3>Groups</h3><div id="groupsList"></div></div>

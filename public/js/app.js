@@ -397,9 +397,9 @@
 
   function renderGroups() {
     $('#groupsList').innerHTML = state.groups.length ? state.groups.map(g => {
-      const joined = (g.members||[]).includes(state.user.id);
+      const joined = (g.members||[]).some(m => m.id === state.user.id);
       const active = g.id === state.activeGroupId ? ' active-row' : '';
-      return `<div class="list-row${active}"><a href="#" data-open-group="${esc(g.id)}"><strong>${esc(g.name)}</strong> <span class="muted">· ${(g.members||[]).length} members</span></a><button class="btn small ${joined?'':'primary'}" data-join-group="${esc(g.id)}">${joined?'Joined':'Join'}</button></div>`;
+      return `<div class="list-row${active}"><a href="#" data-open-group="${esc(g.id)}"><strong>${esc(g.name)}</strong> <span class="muted">· ${(g.category||'General')} · ${(g.members||[]).length} members</span></a><button class="btn small ${joined?'':'primary'}" data-join-group="${esc(g.id)}">${joined?'Joined':'Join'}</button></div>`;
     }).join('') : '<div class="muted">No groups yet.</div>';
     renderGroupDetail();
   }

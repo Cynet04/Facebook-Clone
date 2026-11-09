@@ -440,17 +440,18 @@ app.post('/api/notifications/read', (req, res) => {
 // Groups (Phase 7)
 app.get('/api/groups', (req, res) => {
   const db = readDB();
-  res.json([...(db.groups || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
+  let groups = [...(db.groups || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const { category, search } = req.query;
+  if (category) groups = groups.filter(g => (g.category||'General') === category);
+  if (search) groups = groups.filter(g => (g.name||'').toLowerCase().includes(String(search).toLowerCase()));
+  res.json(groups);
 });
 app.post('/api/groups', writeLimit, (req, res) => {
-  const { name, ownerId } = req.body || {};
+  const { name, ownerId, category, description, rules } = req.body || {};
   if (!name || !ownerId) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
-  const group = { id: uid('g'), name: String(name).slice(0, 120), ownerId, members: [ownerId], posts: [], createdAt: new Date().toISOString() };
-  db.groups = db.groups || [];
-  db.groups.push(group);
-  writeDB(db);
-  res.status(201).json(group);
+  const group = { id: uid('g'), name: String(name).slice(0, 120), ownerId, category: String(category||'General').slice(0,60), description: String(description||'').slice(0,500), rules: String(rules||'').slice(0,2000), members: [{id: ownerId, role: 'admin'}], tags: [], events: [], posts: [], createdAt: new Date().toISOString() };
+  db.groups = db.groups || []; db.groups.push(group); writeDB(db); res.status(201).json(group);
 });
 app.post('/api/groups/:id/join', (req, res) => {
   const { userId } = req.body || {};
@@ -458,9 +459,38 @@ app.post('/api/groups/:id/join', (req, res) => {
   const group = (db.groups || []).find(g => g.id === req.params.id);
   if (!group) return res.status(404).json({ error: 'Not found' });
   group.members = group.members || [];
-  if (userId && !group.members.includes(userId)) group.members.push(userId);
-  writeDB(db);
-  res.json(group);
+  if (!group.members.some(m => m.id === userId)) group.members.push({ id: userId, role: 'member', joinedAt: new Date().toISOString() });
+  writeDB(db); res.json(group);
+});
+app.post('/api/groups/:id/role', writeLimit, (req, res) => {
+  const { userId, targetUserId, role } = req.body || {};
+  if (!userId || !targetUserId || !['admin','moderator','member'].includes(role)) return res.status(400).json({ error: 'Missing/invalid fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId && m.role === 'admin')) return res.status(403).json({ error: 'Only admins can change roles' });
+  const member = group.members.find(m => m.id === targetUserId);
+  if (!member) return res.status(404).json({ error: 'Member not found' });
+  member.role = role; writeDB(db); res.json(group);
+});
+app.post('/api/groups/:id/events', writeLimit, (req, res) => {
+  const { userId, title, date, description } = req.body || {};
+  if (!userId || !title || !date) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId)) return res.status(403).json({ error: 'Must be member to create event' });
+  const ev = { id: uid('ge'), title: String(title).slice(0,120), date: new Date(date).toISOString(), description: String(description||'').slice(0,500), creatorId: userId, attendees: [userId], createdAt: new Date().toISOString() };
+  group.events = group.events || []; group.events.push(ev); writeDB(db); res.status(201).json(ev);
+});
+app.post('/api/groups/:id/rules', writeLimit, (req, res) => {
+  const { userId, rules } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.some(m => m.id === userId && m.role === 'admin')) return res.status(403).json({ error: 'Only admins can edit rules' });
+  group.rules = String(rules||'').slice(0,2000); writeDB(db); res.json(group);
 });
 app.get('/api/groups/:id/posts', (req, res) => {
   const db = readDB();
@@ -475,12 +505,10 @@ app.post('/api/groups/:id/posts', (req, res) => {
   const db = readDB();
   const group = (db.groups || []).find(g => g.id === req.params.id);
   if (!group) return res.status(404).json({ error: 'Not found' });
-  if (!(group.members || []).includes(userId)) return res.status(403).json({ error: 'Join group to post' });
+  if (!group.members.some(m => m.id === userId)) return res.status(403).json({ error: 'Join group to post' });
   const post = { id: uid('gp'), groupId: group.id, userId, content: String(content).slice(0, 2000), createdAt: new Date().toISOString() };
-  group.posts = group.posts || [];
-  group.posts.push(post);
-  writeDB(db);
-  res.status(201).json(post);
+  group.posts = group.posts || []; group.posts.push(post);
+  writeDB(db); res.status(201).json(post);
 });
 
 // Messenger (Phase 6)
