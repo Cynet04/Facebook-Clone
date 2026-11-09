@@ -235,28 +235,40 @@
           <div id="settingsView" class="hidden">
             <div class="card">
               <h3>Settings & Privacy (Mock)</h3>
-              <form id="settingsForm" class="stack">
-                <label class="field"><span>Language (stub)</span>
-                  <select name="lang">
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                  </select>
-                </label>
-                <label class="field"><span>Default post audience label</span>
-                  <select name="audience">
-                    <option value="public">Public</option>
-                    <option value="friends">Friends</option>
-                    <option value="only_me">Only me</option>
-                  </select>
-                </label>
-                <label class="check"><input type="checkbox" name="showEmail" /> Show email on profile</label>
-                <label class="check"><input type="checkbox" name="allowRequests" /> Allow friend requests</label>
-                <label class="check"><input type="checkbox" name="storySharing" /> Allow story sharing</label>
-                <label class="check"><input type="checkbox" name="isModerator" /> Enable local moderation tools (mock)</label>
-                <button class="btn primary small" type="submit">Save Settings</button>
-              </form>
-              <p id="settingsMsg" class="muted"></p>
-            </div>
+<form id="settingsForm" class="stack">
+                  <label class="field"><span>Language (stub)</span>
+                    <select name="lang">
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                    </select>
+                  </label>
+                  <label class="field"><span>Default post audience label</span>
+                    <select name="audience">
+                      <option value="public">Public</option>
+                      <option value="friends">Friends</option>
+                      <option value="only_me">Only me</option>
+                    </select>
+                  </label>
+                  <label class="check"><input type="checkbox" name="showEmail" /> Show email on profile</label>
+                  <label class="check"><input type="checkbox" name="allowRequests" /> Allow friend requests</label>
+                  <label class="check"><input type="checkbox" name="storySharing" /> Allow story sharing</label>
+                  <label class="check"><input type="checkbox" name="isModerator" /> Enable local moderation tools 
+(mock)</label>
+                  <hr style="border-color:var(--line)" />
+                  <h4>Notification Preferences</h4>
+                  <label class="check"><input type="checkbox" name="notifLikes" /> Likes & Reactions</label>
+                  <label class="check"><input type="checkbox" name="notifComments" /> Comments</label>
+                  <label class="check"><input type="checkbox" name="notifMentions" /> Mentions</label>
+                  <label class="check"><input type="checkbox" name="notifFriendRequests" /> Friend Requests</label>
+                  <label class="check"><input type="checkbox" name="notifGroups" /> Groups</label>
+                  <label class="check"><input type="checkbox" name="notifEvents" /> Events</label>
+                  <label class="check"><input type="checkbox" name="notifMarketplace" /> Marketplace</label>
+                  <label class="check"><input type="checkbox" name="notifSound" /> Notification Sound</label>
+                  <label class="check"><input type="checkbox" name="notifPush" /> Push Notifications (Web Push)</label>
+                  <button class="btn primary small" type="submit">Save Settings</button>
+                </form>
+                <p id="settingsMsg" class="muted"></p>
+              </div>
             <div class="card"><h3>Account / Session</h3><div id="sessionInfo"></div></div>
             <div class="card">
               <h3>Data & Diagnostics (Mock)</h3>

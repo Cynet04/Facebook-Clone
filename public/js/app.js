@@ -278,6 +278,21 @@
     f.showEmail.checked = !!state.settings.showEmail;
     f.allowRequests.checked = state.settings.allowRequests !== false;
     f.storySharing.checked = state.settings.storySharing !== false;
+    if (state.user) {
+      api(`/api/notifications/preferences?userId=${encodeURIComponent(state.user.id)}`).then(prefs => {
+        if (prefs) {
+          if (f.notifLikes) f.notifLikes.checked = prefs.categories?.likes !== false;
+          if (f.notifComments) f.notifComments.checked = prefs.categories?.comments !== false;
+          if (f.notifMentions) f.notifMentions.checked = prefs.categories?.mentions !== false;
+          if (f.notifFriendRequests) f.notifFriendRequests.checked = prefs.categories?.friend_requests !== false;
+          if (f.notifGroups) f.notifGroups.checked = prefs.categories?.groups !== false;
+          if (f.notifEvents) f.notifEvents.checked = prefs.categories?.events !== false;
+          if (f.notifMarketplace) f.notifMarketplace.checked = prefs.categories?.marketplace !== false;
+          if (f.notifSound) f.notifSound.checked = prefs.sound !== false;
+          if (f.notifPush) f.notifPush.checked = prefs.push === true;
+        }
+      }).catch(()=>{});
+    }
     $('#sessionInfo').innerHTML = state.user ? `<div><strong>${esc(state.user.name)}</strong></div><div class="muted">${esc(state.user.email)}</div><div class="muted">Theme: ${esc(state.theme)}</div><div class="muted">Audience label: ${esc(audienceLabel(state.settings.audience))}</div>` : '<div class="muted">Not signed in.</div>';
   }
 
@@ -453,7 +468,39 @@
     const badge = $('#notifBadge');
     badge.textContent = String(unread);
     badge.classList.toggle('hidden', unread === 0);
-    $('#notifList').innerHTML = mine.length ? mine.slice(0,30).map(n => `<div class="notif ${n.read?'':'unread'}"><div>${esc(notifText(n))}</div><div class="muted post-time">${esc(timeAgo(n.createdAt))}</div></div>`).join('') : '<div class="muted">No notifications yet.</div>';
+
+    const group = state.notificationGroup || false;
+    const categories = ['all','likes','comments','mentions','friend_requests','groups','events','marketplace'];
+    const catButtons = categories.map(c => `<button class="btn small ${state.notificationCategory===c?'primary':''}" data-notif-category="${esc(c)}">${esc(c.charAt(0).toUpperCase()+c.slice(1))}</button>`).join(' ');
+    const groupToggle = `<label class="row gap" style="margin:5px 0"><input type="checkbox" id="notifGroupToggle" ${group?'checked':''} /> Group by type</label>`;
+
+    let displayList = mine;
+    if (state.notificationCategory && state.notificationCategory !== 'all') {
+      displayList = displayList.filter(n => (n.category || 'general') === state.notificationCategory);
+    }
+    displayList = displayList.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0, 50);
+
+    if (group) {
+      const grouped = {};
+      displayList.forEach(n => {
+        const key = `${n.category||'general'}:${n.actorId||'system'}`;
+        if (!grouped[key]) grouped[key] = { category: n.category||'general', actorId: n.actorId, notifications: [], count: 0, latestAt: n.createdAt, actorName: n.actorId ? userById(n.actorId).name : 'System' };
+        grouped[key].notifications.push(n);
+        grouped[key].count++;
+        if (new Date(n.createdAt) > new Date(grouped[key].latestAt)) grouped[key].latestAt = n.createdAt;
+      });
+      $('#notifList').innerHTML = `
+        <div class="row gap" style="margin-bottom:10px;flex-wrap:wrap">${catButtons}</div>
+        ${groupToggle}
+        ${Object.values(grouped).length ? Object.values(grouped).map(g => `<div class="notif ${g.notifications.some(x=>!x.read)?'unread':''}"><div class="row" style="justify-content:space-between"><strong>${esc(g.actorName)} · ${esc(g.category)}</strong><span class="muted">${g.count} notification${g.count>1?'s':''}</span></div><div class="muted post-time">${esc(timeAgo(g.latestAt))}</div><details><summary>Show ${g.count} notification${g.count>1?'s':''}</summary>${g.notifications.map(x=>`<div class="notif ${x.read?'':'unread'}" style="margin:5px 0;padding-left:10px;border-left:2px solid var(--primary)">${esc(notifText(x))}<div class="muted post-time">${esc(timeAgo(x.createdAt))}</div></div>`).join('')}</details></div>`).join('') : '<div class="muted">No notifications yet.</div>'}
+      `;
+    } else {
+      $('#notifList').innerHTML = `
+        <div class="row gap" style="margin-bottom:10px;flex-wrap:wrap">${catButtons}</div>
+        ${groupToggle}
+        ${displayList.length ? displayList.map(n => `<div class="notif ${n.read?'':'unread'}"><div>${esc(notifText(n))}</div><div class="muted post-time">${esc(timeAgo(n.createdAt))}</div></div>`).join('') : '<div class="muted">No notifications yet.</div>'}
+      `;
+    }
   }
 
   function threadUsers() {
@@ -871,12 +918,28 @@
     }
   });
 
-  $('#settingsForm')?.addEventListener('submit', (e) => {
+  $('#settingsForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target;
     saveSettings({ lang: f.lang.value, audience: f.audience.value, showEmail: f.showEmail.checked, allowRequests: f.allowRequests.checked, storySharing: f.storySharing.checked, isModerator: f.isModerator.checked });
+    const notifPrefs = {
+      categories: {
+        likes: f.notifLikes?.checked,
+        comments: f.notifComments?.checked,
+        mentions: f.notifMentions?.checked,
+        friend_requests: f.notifFriendRequests?.checked,
+        groups: f.notifGroups?.checked,
+        events: f.notifEvents?.checked,
+        marketplace: f.notifMarketplace?.checked
+      },
+      sound: f.notifSound?.checked,
+      push: f.notifPush?.checked
+    };
+    if (state.user) {
+      await api('/api/notifications/preferences', { method:'POST', body: JSON.stringify({ userId: state.user.id, preferences: notifPrefs }) }).catch(err=>console.error(err));
+    }
     applyI18n();
-    $('#settingsMsg').textContent = 'Settings saved locally (mock).';
+    $('#settingsMsg').textContent = 'Settings saved.';
     renderProfile(); renderSettings();
   });
 
@@ -1082,6 +1145,16 @@
       await api(`/api/users/${id}`, { method:'PATCH', body: JSON.stringify({ profileViews: u.profileViews }) }).catch(err=>alert(err.message));
       trackEvent('profile_refresh_insights');
       renderProfile(); return;
+    }
+    if (e.target.closest('[data-notif-category]')) {
+      state.notificationCategory = e.target.closest('[data-notif-category]').dataset.notifCategory;
+      trackEvent('notification_filter', { category: state.notificationCategory });
+      renderNotifications(); return;
+    }
+    if (e.target.id === 'notifGroupToggle') {
+      state.notificationGroup = e.target.checked;
+      trackEvent('notification_group_toggle', { group: state.notificationGroup });
+      renderNotifications(); return;
     }
     if (e.target.closest('[data-search-filter]')) {
       state.searchFilter = e.target.closest('[data-search-filter]').dataset.searchFilter;

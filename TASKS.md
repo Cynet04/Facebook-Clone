@@ -402,16 +402,15 @@
 - [x] Track event interactions via analytics
 - [x] Verify and commit
 
-## Phase 61: Profile Improvements
-- [ ] Add profile tabs (posts, about, photos, friends, groups, events)
-- [ ] Add profile cover photo and avatar upload
-- [ ] Add profile verification badge
-- [ ] Add profile insights (views, followers, engagement)
-- [ ] Add profile customization (theme, featured content)
-- [ ] Add profile activity log
+## Phase 62: Notifications Enhancements
+- [ ] Add notification categories (likes, comments, mentions, friend requests, groups, events, marketplace)
+- [ ] Add notification grouping/batching
+- [ ] Add notification preferences/settings
+- [ ] Add push notification support (Web Push API)
+- [ ] Add notification sound
+- [ ] Add notification read/unread state sync
 - [ ] Verify and commit
 
-## Phase 62+: Infinite
-- [ ] Notifications enhancements
+## Phase 63+: Infinite
 - [ ] Messenger improvements
 - [ ] ...continue indefinitely

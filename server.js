@@ -425,17 +425,72 @@ app.post('/api/friends/respond', (req, res) => {
   res.json({ ok: true, friends: user.friends, friendRequests: user.friendRequests });
 });
 
-// Notifications (Phase 8 base)
+// Notifications (Phase 8 base + Phase 62 enhancements)
 app.get('/api/notifications', (req, res) => {
-  const { userId } = req.query || {};
+  const { userId, category, unreadOnly, limit: lim, group } = req.query || {};
+  if (!userId) return res.json([]);
   const db = readDB();
-  const list = (db.notifications || []).filter(n => !userId || n.userId === userId).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-  res.json(list);
+  let list = (db.notifications || []).filter(n => n.userId === userId).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  if (category) list = list.filter(n => (n.category || 'general') === category);
+  if (unreadOnly === 'true') list = list.filter(n => !n.read);
+  if (group === 'true') {
+    // Group notifications by type/actor for batching
+    const grouped = {};
+    list.forEach(n => {
+      const key = `${n.category||'general'}:${n.actorId||'system'}`;
+      if (!grouped[key]) grouped[key] = { category: n.category||'general', actorId: n.actorId, notifications: [], count: 0, latestAt: n.createdAt };
+      grouped[key].notifications.push(n);
+      grouped[key].count++;
+      if (new Date(n.createdAt) > new Date(grouped[key].latestAt)) grouped[key].latestAt = n.createdAt;
+    });
+    list = Object.values(grouped).sort((a,b)=>new Date(b.latestAt)-new Date(a.latestAt));
+  }
+  const limit = Math.min(100, Math.max(1, Number(lim)||50));
+  res.json(list.slice(0, limit));
 });
 app.post('/api/notifications/read', (req, res) => {
-  const { userId } = req.body || {};
+  const { userId, ids } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
   const db = readDB();
-  (db.notifications || []).forEach(n => { if (!userId || n.userId === userId) n.read = true; });
+  (db.notifications || []).forEach(n => { if (n.userId === userId && (!ids || ids.includes(n.id))) n.read = true; });
+  writeDB(db);
+  res.json({ ok: true });
+});
+app.post('/api/notifications/preferences', writeLimit, (req, res) => {
+  const { userId, preferences } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.notificationPreferences = { ...(user.notificationPreferences || {}), ...(preferences || {}) };
+  writeDB(db);
+  res.json(user.notificationPreferences);
+});
+app.get('/api/notifications/preferences', (req, res) => {
+  const { userId } = req.query || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user.notificationPreferences || { categories: { likes: true, comments: true, mentions: true, friend_requests: true, groups: true, events: true, marketplace: true }, sound: true, push: false });
+});
+app.post('/api/notifications/push-subscribe', writeLimit, (req, res) => {
+  const { userId, subscription } = req.body || {};
+  if (!userId || !subscription) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.pushSubscription = subscription;
+  writeDB(db);
+  res.json({ ok: true });
+});
+app.post('/api/notifications/push-unsubscribe', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  delete user.pushSubscription;
   writeDB(db);
   res.json({ ok: true });
 });
