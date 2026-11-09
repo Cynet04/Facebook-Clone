@@ -402,17 +402,14 @@
 - [x] Track event interactions via analytics
 - [x] Verify and commit
 
-## Phase 59: Reels Improvements
-- [x] Add reel categories and hashtags
-- [x] Add reel comments and share count
-- [x] Add reel save/bookmark functionality
-- [x] Add reel creator analytics (views/likes/shares)
-- [x] Add reel discovery feed algorithm
-- [x] Track reel interactions via analytics
-- [x] Verify and commit
+## Phase 60: Search Improvements
+- [ ] Add search filters (people, posts, groups, pages, reels, events, jobs)
+- [ ] Add search suggestions/autocomplete
+- [ ] Add search history
+- [ ] Add search analytics
+- [ ] Verify and commit
 
-## Phase 60+: Infinite
-- [ ] Search improvements
+## Phase 61+: Infinite
 - [ ] Profile improvements
 - [ ] Notifications enhancements
 - [ ] Messenger improvements

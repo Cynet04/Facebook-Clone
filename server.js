@@ -1056,6 +1056,92 @@ app.post('/api/reels/:id/view', writeLimit, (req, res) => {
   writeDB(db); res.json(r);
 });
 
+// Search API (Phase 60)
+app.get('/api/search', (req, res) => {
+  const { q, type, limit: lim } = req.query;
+  if (!q || !String(q).trim()) return res.json({ people: [], posts: [], groups: [], pages: [], reels: [], events: [], jobs: [], hashtags: [] });
+  const query = String(q).toLowerCase().trim();
+  const limit = Math.min(50, Math.max(1, Number(lim)||20));
+  const db = readDB();
+  const types = (type || 'all').split(',').map(s=>s.trim());
+  const include = (t) => types.includes('all') || types.includes(t);
+  const results = { people: [], posts: [], groups: [], pages: [], reels: [], events: [], jobs: [], hashtags: [] };
+  if (include('people')) {
+    const people = (db.users || []).filter(u => (u.name||'').toLowerCase().includes(query)).slice(0, limit);
+    results.people = people.map(u => ({ id: u.id, name: u.name, avatar: u.avatar }));
+  }
+  if (include('posts')) {
+    const posts = (db.posts || []).filter(p => (p.content||'').toLowerCase().includes(query)).slice(0, limit);
+    results.posts = posts.map(p => ({ id: p.id, content: p.content.slice(0,200), userId: p.userId, createdAt: p.createdAt }));
+  }
+  if (include('groups')) {
+    const groups = (db.groups || []).filter(g => (g.name||'').toLowerCase().includes(query) || (g.description||'').toLowerCase().includes(query)).slice(0, limit);
+    results.groups = groups.map(g => ({ id: g.id, name: g.name, description: g.description?.slice(0,200), category: g.category, memberCount: (g.members||[]).length }));
+  }
+  if (include('pages')) {
+    const pages = (db.pages || []).filter(p => (p.name||'').toLowerCase().includes(query)).slice(0, limit);
+    results.pages = pages.map(p => ({ id: p.id, name: p.name, category: p.category, likes: (p.likes||[]).length }));
+  }
+  if (include('reels')) {
+    const reels = (db.reels || []).filter(r => (r.caption||'').toLowerCase().includes(query) || (r.hashtags||[]).some(h=>h.toLowerCase().includes(query))).slice(0, limit);
+    results.reels = reels.map(r => ({ id: r.id, caption: r.caption.slice(0,200), category: r.category, creatorUserId: r.creatorUserId, views: r.views }));
+  }
+  if (include('events')) {
+    const events = (db.eventItems || []).filter(e => (e.title||'').toLowerCase().includes(query) || (e.description||'').toLowerCase().includes(query)).slice(0, limit);
+    results.events = events.map(e => ({ id: e.id, title: e.title, date: e.date, location: e.location, category: e.category, rsvpCount: (e.rsvps||[]).length }));
+  }
+  if (include('jobs')) {
+    const jobs = (db.jobs || []).filter(j => (j.title||'').toLowerCase().includes(query) || (j.company||'').toLowerCase().includes(query)).slice(0, limit);
+    results.jobs = jobs.map(j => ({ id: j.id, title: j.title, company: j.company, location: j.location, type: j.type }));
+  }
+  if (include('hashtags')) {
+    const tagCounts = {};
+    (db.posts || []).forEach(p => {
+      const text = (p.content||'').toLowerCase();
+      const tags = text.match(/#\w+/g) || [];
+      tags.forEach(t => { if (t.includes(query.replace(/^#/,''))) tagCounts[t] = (tagCounts[t]||0)+1; });
+    });
+    results.hashtags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0, 12).map(([tag,count]) => ({ tag, count }));
+  }
+  res.json(results);
+});
+
+app.get('/api/search/suggestions', (req, res) => {
+  const { q, limit: lim } = req.query;
+  if (!q || !String(q).trim()) return res.json([]);
+  const query = String(q).toLowerCase().trim();
+  const limit = Math.min(10, Math.max(1, Number(lim)||5));
+  const db = readDB();
+  const suggestions = new Set();
+  (db.users || []).filter(u => (u.name||'').toLowerCase().includes(query)).slice(0, limit).forEach(u => suggestions.add({ type: 'user', id: u.id, label: u.name, sub: '@' + (u.username||u.id) }));
+  (db.groups || []).filter(g => (g.name||'').toLowerCase().includes(query)).slice(0, limit).forEach(g => suggestions.add({ type: 'group', id: g.id, label: g.name, sub: g.category }));
+  (db.pages || []).filter(p => (p.name||'').toLowerCase().includes(query)).slice(0, limit).forEach(p => suggestions.add({ type: 'page', id: p.id, label: p.name, sub: p.category }));
+  (db.reels || []).filter(r => (r.caption||'').toLowerCase().includes(query)).slice(0, limit).forEach(r => suggestions.add({ type: 'reel', id: r.id, label: r.caption.slice(0,50) }));
+  (db.eventItems || []).filter(e => (e.title||'').toLowerCase().includes(query)).slice(0, limit).forEach(e => suggestions.add({ type: 'event', id: e.id, label: e.title }));
+  res.json(Array.from(suggestions).slice(0, limit));
+});
+
+app.post('/api/search/history', writeLimit, (req, res) => {
+  const { userId, query } = req.body || {};
+  if (!userId || !String(query).trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  db.searchHistory = db.searchHistory || [];
+  const idx = db.searchHistory.findIndex(h => h.userId === userId && h.query === query);
+  if (idx >= 0) db.searchHistory.splice(idx, 1);
+  db.searchHistory.unshift({ userId, query, createdAt: new Date().toISOString() });
+  if (db.searchHistory.length > 1000) db.searchHistory = db.searchHistory.slice(0, 1000);
+  writeDB(db); res.json({ ok: true });
+});
+
+app.get('/api/search/history', (req, res) => {
+  const { userId, limit: lim } = req.query;
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const limit = Math.min(50, Math.max(1, Number(lim)||10));
+  const db = readDB();
+  const history = (db.searchHistory || []).filter(h => h.userId === userId).slice(0, limit);
+  res.json(history);
+});
+
 // Analytics/events stub (Phase 32)
 app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};

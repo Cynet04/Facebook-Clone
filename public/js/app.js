@@ -626,22 +626,57 @@
   function renderSearch() {
     const q = state.searchQuery.toLowerCase().trim();
     const meta = $('#searchMeta');
-    if (!q) { meta.textContent = 'Type in the top search box and press Enter.'; $('#searchResults').innerHTML = ''; return; }
-    const b = blockedIds();
-    const users = state.users.filter(u => !b.has(u.id) && (u.name||'').toLowerCase().includes(q));
-    const posts = visiblePosts().filter(p => (p.content||'').toLowerCase().includes(q));
-    const tags = {};
-    visiblePosts().forEach(p => extractHashtags(p.content).forEach(t => { if (t.toLowerCase().includes(q.replace(/^#/,''))) tags[t]=(tags[t]||0)+1; }));
-    const tagList = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,12);
-    meta.textContent = `Query: "${state.searchQuery}" · ${users.length} people · ${posts.length} posts · ${tagList.length} hashtags`;
-    $('#searchResults').innerHTML = `
-      <div class="section-title">People</div>
-      ${users.map(u=>`<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>`).join('') || '<div class="muted">No people found.</div>'}
-      <div class="section-title">Hashtags</div>
-      ${tagList.map(([t,n])=>`<div class="list-row"><a href="#" data-hashtag="${esc(t)}">${esc(t)}</a><span class="muted">${n} posts</span></div>`).join('') || '<div class="muted">No hashtags found.</div>'}
-      <div class="section-title">Posts</div>
-      ${posts.map(p=>postCard(p)).join('') || '<div class="muted">No posts found.</div>'}
-    `;
+    if (!q) {
+      // Show search history
+      const historyHtml = (state.searchHistory||[]).slice(0,8).length ? `
+        <div class="card"><h3>Recent searches</h3>${(state.searchHistory||[]).slice(0,8).map(h=>`<div class="list-row"><a href="#" data-search-history="${esc(h.query)}">${esc(h.query)}</a><span class="muted">${new Date(h.createdAt).toLocaleDateString()}</span></div>`).join('')}</div>
+      ` : '';
+      meta.textContent = 'Type in the top search box and press Enter.';
+      $('#searchResults').innerHTML = historyHtml;
+      return;
+    }
+    const activeFilter = state.searchFilter || 'all';
+    const filters = ['all','people','posts','groups','pages','reels','events','jobs','hashtags'];
+    const filterTabs = filters.map(f=>`<button class="btn small ${f===activeFilter?'primary':''}" data-search-filter="${esc(f)}">${esc(f)}</button>`).join(' ');
+    api(`/api/search?q=${encodeURIComponent(q)}&type=${activeFilter}`).then(data => {
+      const results = data || { people: [], posts: [], groups: [], pages: [], reels: [], events: [], jobs: [], hashtags: [] };
+      meta.textContent = `Query: "${state.searchQuery}" · Filter: ${activeFilter}`;
+      $('#searchResults').innerHTML = `
+        <div class="row gap" style="margin-bottom:10px;flex-wrap:wrap">${filterTabs}</div>
+        ${activeFilter==='all' || activeFilter==='people' ? `
+          <div class="section-title">People</div>
+          ${results.people.map(u=>`<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>`).join('') || '<div class="muted">No people found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='hashtags' ? `
+          <div class="section-title">Hashtags</div>
+          ${results.hashtags.map(t=>`<div class="list-row"><a href="#" data-hashtag="${esc(t.tag)}">${esc(t.tag)}</a><span class="muted">${t.count} posts</span></div>`).join('') || '<div class="muted">No hashtags found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='posts' ? `
+          <div class="section-title">Posts</div>
+          ${results.posts.map(p=>postCard({ ...p, userId: p.userId })).join('') || '<div class="muted">No posts found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='groups' ? `
+          <div class="section-title">Groups</div>
+          ${results.groups.map(g=>`<div class="list-row"><a href="#" data-open-group="${esc(g.id)}">${esc(g.name)}</a><span class="muted">${g.category} · ${g.memberCount} members</span></div>`).join('') || '<div class="muted">No groups found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='pages' ? `
+          <div class="section-title">Pages</div>
+          ${results.pages.map(p=>`<div class="list-row"><a href="#" data-page-like="${esc(p.id)}">${esc(p.name)}</a><span class="muted">${p.category} · ${p.likes} likes</span></div>`).join('') || '<div class="muted">No pages found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='reels' ? `
+          <div class="section-title">Reels</div>
+          ${results.reels.map(r=>`<div class="list-row"><strong>${esc(r.caption.slice(0,60))}</strong><span class="muted">${r.category} · ${r.views} views</span></div>`).join('') || '<div class="muted">No reels found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='events' ? `
+          <div class="section-title">Events</div>
+          ${results.events.map(e=>`<div class="list-row"><a href="#" data-event-rsvp="${esc(e.id)}">${esc(e.title)}</a><span class="muted">${new Date(e.date).toLocaleDateString()} · ${e.rsvpCount} going</span></div>`).join('') || '<div class="muted">No events found.</div>'}
+        ` : ''}
+        ${activeFilter==='all' || activeFilter==='jobs' ? `
+          <div class="section-title">Jobs</div>
+          ${results.jobs.map(j=>`<div class="list-row"><a href="#" data-job-apply="${esc(j.id)}">${esc(j.title)}</a><span class="muted">${j.company} · ${j.location}</span></div>`).join('') || '<div class="muted">No jobs found.</div>'}
+        ` : ''}
+      `;
+    }).catch(err => { meta.textContent = 'Search failed'; console.error(err); });
   }
 
   async function loadUsers() { state.users = await api('/api/users'); renderContactsInto('#contactsList'); }
@@ -679,6 +714,7 @@
     try { state.games = await api('/api/games'); } catch { state.games = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
+    try { state.searchHistory = await api(`/api/search/history?userId=${encodeURIComponent(state.user.id)}&limit=20`); } catch { state.searchHistory = []; }
     renderNotifications();
   }
   async function loadFeed(reset = false) {
@@ -755,9 +791,24 @@
 
   $('#globalSearch').addEventListener('input', (e) => {
     clearTimeout(state.searchTimer);
-    state.searchTimer = setTimeout(() => {
-      state.searchQuery = e.target.value.trim();
+    const val = e.target.value.trim();
+    state.searchTimer = setTimeout(async () => {
+      state.searchQuery = val;
       if (state.view === 'search') renderView();
+      if (val.length >= 2) {
+        const suggestions = await api(`/api/search/suggestions?q=${encodeURIComponent(val)}`).catch(()=>[]);
+        if (suggestions && suggestions.length > 0) {
+          const dropdown = $('#searchSuggestions') || (() => { const d = document.createElement('div'); d.id = 'searchSuggestions'; d.className = 'search-suggestions'; document.body.appendChild(d); return d; })();
+          dropdown.style.display = 'block';
+          dropdown.style.left = e.target.getBoundingClientRect().left + 'px';
+          dropdown.style.top = (e.target.getBoundingClientRect().bottom + window.scrollY) + 'px';
+          dropdown.style.width = e.target.getBoundingClientRect().width + 'px';
+          dropdown.innerHTML = suggestions.map(s => `<div class="search-suggestion" data-suggestion-type="${esc(s.type)}" data-suggestion-id="${esc(s.id)}">${esc(s.label)}<span class="muted">${s.sub||''}</span></div>`).join('');
+        }
+      } else {
+        const dropdown = $('#searchSuggestions');
+        if (dropdown) dropdown.style.display = 'none';
+      }
     }, 250);
   });
   $('#globalSearch').addEventListener('keydown', (e) => {
@@ -765,7 +816,25 @@
     clearTimeout(state.searchTimer);
     state.searchQuery = e.target.value.trim();
     trackEvent('search', { query: state.searchQuery.slice(0,80) });
+    if (state.user) {
+      api('/api/search/history', { method:'POST', body: JSON.stringify({ userId: state.user.id, query: state.searchQuery }) }).catch(()=>{});
+    }
     state.view = 'search'; renderView();
+  });
+  document.addEventListener('click', (e) => {
+    const suggestion = e.target.closest('.search-suggestion');
+    if (suggestion && state.user) {
+      const type = suggestion.dataset.suggestionType;
+      const id = suggestion.dataset.suggestionId;
+      state.searchQuery = suggestion.textContent.trim();
+      $('#globalSearch').value = state.searchQuery;
+      trackEvent('search_suggestion_click', { type, id });
+      state.view = 'search'; renderView();
+    }
+    if (!e.target.closest('#globalSearch') && !e.target.closest('#searchSuggestions')) {
+      const dropdown = $('#searchSuggestions');
+      if (dropdown) dropdown.style.display = 'none';
+    }
   });
 
   $('#settingsForm')?.addEventListener('submit', (e) => {
@@ -966,6 +1035,18 @@
         if (data) { state.reels = data; renderReels(); }
       }
       return;
+    }
+    if (e.target.closest('[data-search-filter]')) {
+      state.searchFilter = e.target.closest('[data-search-filter]').dataset.searchFilter;
+      trackEvent('search_filter', { filter: state.searchFilter });
+      renderSearch(); return;
+    }
+    if (e.target.closest('[data-search-history]') && state.user) {
+      const query = e.target.closest('[data-search-history]').dataset.searchHistory;
+      state.searchQuery = query;
+      $('#globalSearch').value = query;
+      trackEvent('search_history_click', { query });
+      renderSearch(); return;
     }
     if (e.target.closest('[data-page-like]') && state.user) {
       const id = e.target.closest('[data-page-like]').dataset.pageLike;
