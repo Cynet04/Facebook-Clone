@@ -190,15 +190,22 @@
 - [x] Verify and commit
 
 ## Phase 29: E2E Test Scaffold (Mock)
-- [ ] Add minimal E2E test runner script (Playwright/Puppeteer-free lightweight HTTP+DOM checks or Node fetch smoke)
-- [ ] Add API smoke tests for key endpoints (auth/posts/comments/groups/marketplace/reports)
-- [ ] Add frontend shell smoke checks (index contains key UI anchors)
-- [ ] Wire `npm run test:e2e` script
+- [x] Add minimal E2E test runner script (Playwright/Puppeteer-free lightweight HTTP+DOM checks or Node fetch smoke)
+- [x] Add API smoke tests for key endpoints (auth/posts/comments/groups/marketplace/reports)
+- [x] Add frontend shell smoke checks (index contains key UI anchors)
+- [x] Wire `npm run test:e2e` script
+- [x] Verify and commit
+
+## Phase 30: Data Export/Import Mock (JSON)
+- [ ] Add export endpoint/UI action to download DB snapshot (mock-safe fields)
+- [ ] Add import endpoint/UI action with validation/merge or replace option
+- [ ] Add basic safeguards (size/type checks, error messaging)
+- [ ] Add diagnostics panel entry showing DB counts
 - [ ] Verify and commit
 
-## Phase 30+: Infinite
-- [ ] Data export/import mock
+## Phase 31+: Infinite
 - [ ] Developer/admin diagnostics panel
 - [ ] Analytics/events stub
 - [ ] Scheduled posts/stories mock
+- [ ] Rate limiting/security hardening mock
 - [ ] ...continue indefinitely
