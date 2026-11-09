@@ -353,8 +353,42 @@
       const f = $('#profileEditForm');
       ['name','bio','work','education','location','relationship','website','about','cover'].forEach(k => { if (f[k]) f[k].value = u[k] || ''; });
     }
-    const mine = visiblePosts().filter(p => p.userId === id).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt||0)-new Date(a.createdAt||0));
-    $('#profilePosts').innerHTML = mine.length ? mine.map(p => postCard(p)).join('') : `<div class="card muted">No posts on this timeline yet.</div>`;
+
+    // Profile tabs
+    const tabs = ['posts','about','photos','friends','groups','events'];
+    const activeTab = state.profileTab || 'posts';
+    const tabHtml = tabs.map(t => `<button class="btn small ${t===activeTab?'primary':''}" data-profile-tab="${esc(t)}">${esc(t.charAt(0).toUpperCase()+t.slice(1))}</button>`).join(' ');
+    $('#profileTabs').innerHTML = tabHtml;
+
+    // Tab content
+    if (activeTab === 'posts') {
+      const mine = visiblePosts().filter(p => p.userId === id).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt||0)-new Date(a.createdAt||0));
+      $('#profileTabContent').innerHTML = mine.length ? mine.map(p => postCard(p)).join('') : `<div class="card muted">No posts on this timeline yet.</div>`;
+    } else if (activeTab === 'about') {
+      $('#profileTabContent').innerHTML = `<div class="card">${about.length ? `<div class="about-grid">${about.map(([k,v])=>`<div><strong>${esc(k)}:</strong> ${k==='Website' ? `<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>` : esc(v)}</div>`).join('')}</div>` : '<div class="muted">No about info yet.</div>'}</div>`;
+    } else if (activeTab === 'photos') {
+      const photoPosts = visiblePosts().filter(p => p.userId === id && p.media && p.media.length > 0);
+      $('#profileTabContent').innerHTML = photoPosts.length ? `<div class="market-grid">${photoPosts.map(p => `<div class="card market-card"><div class="market-placeholder" style="background-image:url('${esc(p.media[0].url||'')}')"></div><div class="market-body">${esc(p.content||'').slice(0,100)}</div></div>`).join('')}</div>` : `<div class="card muted">No photos yet.</div>`;
+    } else if (activeTab === 'friends') {
+      const friends = (u.friends || []).filter(fid => !blockedIds().has(fid)).map(fid => userById(fid));
+      $('#profileTabContent').innerHTML = friends.length ? friends.map(f => `<div class="list-row"><a href="#" data-open-profile="${esc(f.id)}" class="row gap"><span class="avatar-sm">${esc(initials(f.name))}</span>${esc(f.name)}</a><button class="btn small" data-message-user="${esc(f.id)}">Message</button></div>`).join('') : `<div class="card muted">No friends yet.</div>`;
+    } else if (activeTab === 'groups') {
+      const groups = (state.groups || []).filter(g => (g.members || []).some(m => m.id === u.id));
+      $('#profileTabContent').innerHTML = groups.length ? groups.map(g => `<div class="list-row"><a href="#" data-open-group="${esc(g.id)}"><strong>${esc(g.name)}</strong> <span class="muted">· ${(g.category||'General')} · ${(g.members||[]).length} members</span></a></div>`).join('') : `<div class="card muted">No groups yet.</div>`;
+    } else if (activeTab === 'events') {
+      const events = (state.eventItems || []).filter(e => e.hostUserId === u.id || (e.rsvps||[]).includes(u.id));
+      $('#profileTabContent').innerHTML = events.length ? events.map(e => `<div class="list-row"><strong>${esc(e.title)}</strong><span class="muted">${new Date(e.date).toLocaleDateString()} · ${(e.rsvps||[]).length} going</span></div>`).join('') : `<div class="card muted">No events yet.</div>`;
+    }
+
+    // Profile insights for own profile
+    if (isMe) {
+      const views = u.profileViews || 0;
+      const followers = (u.followers||[]).length;
+      const following = (u.following||[]).length;
+      $('#profileInsights').innerHTML = `<div class="card row gap" style="margin-top:10px"><div class="pill">Profile views: ${views}</div><div class="pill">Followers: ${followers}</div><div class="pill">Following: ${following}</div><button class="btn small" data-profile-refresh-insights>Refresh</button></div>`;
+    } else {
+      $('#profileInsights').innerHTML = '';
+    }
   }
 
   function renderContactsInto(sel) {
@@ -1035,6 +1069,19 @@
         if (data) { state.reels = data; renderReels(); }
       }
       return;
+    }
+    if (e.target.closest('[data-profile-tab]') && state.user) {
+      state.profileTab = e.target.closest('[data-profile-tab]').dataset.profileTab;
+      trackEvent('profile_tab_click', { tab: state.profileTab });
+      renderProfile(); return;
+    }
+    if (e.target.closest('[data-profile-refresh-insights]') && state.user) {
+      const id = state.profileUserId || state.user.id;
+      const u = userById(id);
+      u.profileViews = (u.profileViews || 0) + Math.floor(Math.random() * 10) + 1;
+      await api(`/api/users/${id}`, { method:'PATCH', body: JSON.stringify({ profileViews: u.profileViews }) }).catch(err=>alert(err.message));
+      trackEvent('profile_refresh_insights');
+      renderProfile(); return;
     }
     if (e.target.closest('[data-search-filter]')) {
       state.searchFilter = e.target.closest('[data-search-filter]').dataset.searchFilter;
