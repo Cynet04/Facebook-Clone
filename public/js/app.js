@@ -505,12 +505,29 @@
       </div>`).join('') : '<div class="muted">No listings yet.</div>';
   }
 
+  function savedCollections() { return JSON.parse(localStorage.getItem('fb_saved_collections') || '{"collections":{},"assign":{}}'); }
+  function saveCollectionsModel(m) { localStorage.setItem('fb_saved_collections', JSON.stringify(m)); }
   function renderSaved() {
     const el = $('#savedPosts');
     if (!el) return;
     const ids = userById(state.user.id).savedPosts || [];
     const posts = ids.map(id => state.posts.find(p => p.id === id)).filter(Boolean);
-    el.innerHTML = posts.length ? posts.map(p => postCard(p)).join('') : '<div class="muted">No saved posts yet. Use Save on any post.</div>';
+    const model = savedCollections();
+    const cols = model.collections || {};
+    const assign = model.assign || {};
+    const grouped = {};
+    posts.forEach(p => { const c = assign[p.id] || '_none'; (grouped[c] = grouped[c] || []).push(p); });
+    const colNames = Object.keys(cols).sort((a,b)=>cols[a].localeCompare(cols[b]));
+    el.innerHTML = `
+      <form id="savedCollectionForm" class="row gap" style="margin-bottom:10px"><input name="name" placeholder="New collection name" maxlength="40" required /><button class="btn primary small" type="submit">Add collection</button></form>
+      ${!posts.length ? '<div class="muted">No saved posts yet. Use Save on any post.</div>' : ''}
+      ${colNames.map(cid => `<section class="saved-collection"><h4>${esc(cols[cid])}</h4>${(grouped[cid]||[]).map(p => savedPostRow(p, cid)).join('') || '<div class="muted">Empty collection.</div>'}</section>`).join('')}
+      <section class="saved-collection"><h4>Uncollected</h4>${(grouped._none||[]).map(p => savedPostRow(p, '_none')).join('') || (posts.length ? '<div class="muted">No uncollected saved posts.</div>' : '')}</section>`;
+  }
+  function savedPostRow(p, current) {
+    const model = savedCollections(); const cols = model.collections || {};
+    const opts = [`<option value="_none"${current==='_none'?' selected':''}>Uncollected</option>`].concat(Object.keys(cols).sort((a,b)=>cols[a].localeCompare(cols[b])).map(id => `<option value="${esc(id)}"${current===id?' selected':''}>${esc(cols[id])}</option>`)).join('');
+    return `<div class="saved-post-row card" style="margin:8px 0">${postCard(p)}<div class="row gap" style="margin-top:6px"><label class="muted">Collection <select data-saved-collection="${esc(p.id)}">${opts}</select></label></div></div>`;
   }
 
   function renderSearch() {

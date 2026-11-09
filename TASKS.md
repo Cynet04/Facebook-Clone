@@ -322,9 +322,16 @@
 - [x] Track pages interactions via analytics
 - [x] Verify and commit
 
-## Phase 48+: Infinite
-- [ ] Saved collections/folders
+## Phase 48: Saved Collections/Folders (Stub)
+- [x] Add client-side saved collections model (localStorage mock)
+- [x] Add collection create/assign UI in Saved view
+- [x] Render saved posts grouped by collection / uncollected
+- [x] Track collection interactions via analytics
+- [x] Verify and commit
+
+## Phase 49+: Infinite
 - [ ] Reels stub
 - [ ] Gaming stub
 - [ ] Jobs stub
+- [ ] Ad center stub
 - [ ] ...continue indefinitely
