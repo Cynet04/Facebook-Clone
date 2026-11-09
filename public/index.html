@@ -17,6 +17,7 @@
           <input id="globalSearch" type="search" placeholder="Search Facebook" aria-label="Search" />
         </div>
         <span id="offlineBadge" class="offline-badge hidden">Offline</span>
+        <span id="statusLine" class="status-line muted"></span>
       </div>
       <nav class="nav-center" aria-label="Primary">
         <a class="nav-icon active" href="#" data-view="home" title="Home">🏠</a>
@@ -25,6 +26,7 @@
         <a class="nav-icon" href="#" data-view="marketplace" title="Marketplace">🛍️</a>
       </nav>
       <div class="nav-right">
+        <button class="icon-btn" id="refreshBtn" title="Refresh data">↻</button>
         <button class="icon-btn" id="themeBtn" title="Toggle dark mode">🌙</button>
         <button class="icon-btn" id="messengerBtn" title="Messenger">💬</button>
         <button class="icon-btn" id="notifBtn" title="Notifications">🔔<span id="notifBadge" class="badge hidden">0</span></button>

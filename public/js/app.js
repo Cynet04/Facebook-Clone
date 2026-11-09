@@ -23,7 +23,9 @@
     commentsByPost: {},
     view: 'home',
     profileUserId: null,
-    searchQuery: ''
+    searchQuery: '',
+    lastUpdatedAt: null,
+    lastError: ''
   };
 
   const $ = (s, r = document) => r.querySelector(s);
@@ -47,10 +49,23 @@
   function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); }
 
   async function api(path, opts = {}) {
-    const res = await fetch(path, { headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || 'Request failed');
-    return data;
+    try {
+      const res = await fetch(path, { headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+      state.lastError = '';
+      return data;
+    } catch (e) {
+      state.lastError = e.message || 'Network error';
+      renderStatus();
+      throw e;
+    }
+  }
+  function renderStatus() {
+    const el = $('#statusLine'); if (!el) return;
+    const t = state.lastUpdatedAt ? new Date(state.lastUpdatedAt).toLocaleTimeString() : 'never';
+    el.textContent = state.lastError ? `Error: ${state.lastError}` : `Updated ${t}`;
+    el.classList.toggle('status-error', !!state.lastError);
   }
 
   function setSession(user, token) {
@@ -417,15 +432,19 @@
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     renderNotifications();
   }
-  async function loadFeed() {
-    if (!state.user) return;
-    await loadUsers();
-    state.posts = await api('/api/posts');
-    await loadCommentsForPosts();
-    await loadAux();
-    if (state.view === 'groups') await loadGroupPosts();
-    refreshSessionUser();
-    renderView();
+  async function loadFeed(reset = false) {
+    if (!state.user || state._loadingFeed) return;
+    state._loadingFeed = true;
+    try {
+      await loadUsers();
+      await loadPosts(reset);
+      await loadAux();
+      if (state.view === 'groups') await loadGroupPosts();
+      refreshSessionUser();
+      state.lastUpdatedAt = new Date().toISOString();
+      renderView();
+      renderStatus();
+    } finally { state._loadingFeed = false; }
   }
 
   // Auth/session
@@ -439,6 +458,7 @@
     try { const data = await api('/api/auth/signup', { method: 'POST', body: JSON.stringify(Object.fromEntries(new FormData(e.target))) }); setSession(data.user, data.token); await loadFeed(true); }
     catch (err) { $('#authMsg').textContent = err.message; }
   });
+  $('#refreshBtn')?.addEventListener('click', async () => { if (!state.user) return; await loadFeed(true); });
   $('#logoutBtn').addEventListener('click', () => { $('#accountMenu').classList.add('hidden'); setSession(null, ''); });
   $('#profileBtn').addEventListener('click', () => $('#accountMenu').classList.toggle('hidden'));
   document.addEventListener('click', (e) => {

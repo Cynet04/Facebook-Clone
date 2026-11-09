@@ -155,11 +155,11 @@
 - [x] Verify and commit
 
 ## Phase 24: Real-time Transport Mock Improvements
-- [ ] Add lightweight polling intervals for feed/messages/notifications visibility
-- [ ] Add "last updated" indicator and manual refresh control
-- [ ] Reduce unnecessary reloads by checking view/state guards
-- [ ] Add basic API error surface in UI status line
-- [ ] Verify and commit
+- [x] Add lightweight polling intervals for feed/messages/notifications visibility
+- [x] Add "last updated" indicator and manual refresh control
+- [x] Reduce unnecessary reloads by checking view/state guards
+- [x] Add basic API error surface in UI status line
+- [x] Verify and commit
 
 ## Phase 25+: Infinite
 - [ ] User blocking/reporting mock expansion
