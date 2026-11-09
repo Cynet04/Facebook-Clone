@@ -427,6 +427,7 @@
   function renderWatch() {
     $('#watchView').innerHTML = `<div class="card"><h2>Watch</h2><p class="muted">Videos stub (mock player/cards)</p></div>${(state.videos||[]).map(v=>`<div class="card video-card"><div class="muted">${esc(v.channel||'Channel')} · ${esc(String(v.views||0))} views</div><h3>${esc(v.title||'Video')}</h3><video controls preload="metadata" src="${esc(v.url||'')}" style="width:100%;max-height:360px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-watch-like="${esc(v.id)}">👍 ${(v.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No videos.</div>'}`;
   }
+  function renderMarketplace() {
     const el = $('#marketplaceList');
     if (!el) return;
     el.innerHTML = state.marketplace.length ? state.marketplace.map(m => `
