@@ -10,7 +10,7 @@
   <div id="app">
     <header class="navbar" role="banner">
       <div class="nav-left">
-        <a class="logo" href="#" aria-label="Home">f</a>
+        <a class="logo" href="#" aria-label="Home" data-view="home">f</a>
         <div class="search-box">
           <input id="globalSearch" type="search" placeholder="Search Facebook" aria-label="Search" />
         </div>
@@ -27,7 +27,8 @@
           <span class="avatar-sm" id="navAvatar">U</span>
         </button>
         <div class="dropdown hidden" id="accountMenu">
-          <div id="accountInfo"></div>
+          <div id="accountInfo" class="menu-item"></div>
+          <button data-view="profile" class="menu-item">Profile</button>
           <button id="logoutBtn" class="menu-item">Log Out</button>
         </div>
       </div>
@@ -38,15 +39,15 @@
         <div class="menu-item" data-view="profile"><span class="avatar-sm" id="sideAvatar">U</span><span id="sideName">User</span></div>
         <div class="menu-item" data-view="friends">Friends</div>
         <div class="menu-item" data-view="groups">Groups</div>
+        <div class="menu-item" data-view="messenger">Messenger</div>
         <div class="menu-item muted">Marketplace (soon)</div>
         <div class="menu-item muted">Watch (soon)</div>
-        <div class="menu-item muted">Memories (soon)</div>
         <hr />
         <div class="section-title">Your shortcuts</div>
-        <div class="menu-item muted">No shortcuts yet</div>
+        <div id="shortcutsList" class="muted menu-item">No shortcuts yet</div>
       </aside>
 
-      <section class="feed" aria-label="News Feed">
+      <section class="feed" aria-label="Main content">
         <div id="authGate" class="card auth-gate hidden">
           <h2>Log in to Facebook Clone</h2>
           <form id="loginForm" class="stack">
@@ -83,21 +84,49 @@
               <div class="cover" id="profileCover"></div>
               <div class="profile-meta">
                 <div class="avatar-lg" id="profileAvatar">U</div>
-                <div>
+                <div class="profile-meta-text">
                   <h2 id="profileName">User</h2>
+                  <p id="profileBio" class="muted"></p>
                   <p id="profileSub" class="muted">Timeline</p>
+                  <div id="profileActions" class="row gap"></div>
                 </div>
               </div>
+            </div>
+            <div id="profileEditCard" class="card hidden">
+              <h3>Edit profile</h3>
+              <form id="profileEditForm" class="stack">
+                <input name="name" placeholder="Name" maxlength="80" />
+                <input name="bio" placeholder="Bio" maxlength="280" />
+                <input name="cover" placeholder="Cover CSS/color (e.g. #1877f2 or linear-gradient(...))" maxlength="500" />
+                <button class="btn primary small" type="submit">Save</button>
+              </form>
             </div>
             <div id="profilePosts"></div>
           </div>
 
           <div id="friendsView" class="hidden">
-            <div class="card"><h3>Friends</h3><p class="muted">Friends system coming in Phase 5.</p><div id="friendsList"></div></div>
+            <div class="card"><h3>Friend Requests</h3><div id="friendRequests"></div></div>
+            <div class="card"><h3>People You May Know</h3><div id="peopleList"></div></div>
+            <div class="card"><h3>Your Friends</h3><div id="friendsList"></div></div>
           </div>
 
           <div id="groupsView" class="hidden">
-            <div class="card"><h3>Groups</h3><p class="muted">Groups coming in Phase 7.</p><div id="groupsList"></div></div>
+            <div class="card">
+              <h3>Create Group</h3>
+              <form id="groupCreateForm" class="row gap">
+                <input name="name" placeholder="Group name" required />
+                <button class="btn primary small" type="submit">Create</button>
+              </form>
+            </div>
+            <div class="card"><h3>Groups</h3><div id="groupsList"></div></div>
+          </div>
+
+          <div id="messengerView" class="hidden">
+            <div class="card"><h3>Messenger</h3><div id="messengerPage" class="messenger-page"></div></div>
+          </div>
+
+          <div id="searchView" class="hidden">
+            <div class="card"><h3>Search Results</h3><div id="searchResults"></div></div>
           </div>
         </div>
       </section>
@@ -113,12 +142,16 @@
 
     <div id="messengerOverlay" class="overlay hidden">
       <div class="overlay-header"><strong>Messenger</strong><button class="icon-btn" id="closeMessenger">✕</button></div>
-      <div class="overlay-body muted">Messenger coming in Phase 6.</div>
+      <div id="messengerOverlayBody" class="overlay-body"></div>
+      <form id="messengerSendForm" class="overlay-footer hidden">
+        <input name="content" placeholder="Aa" autocomplete="off" />
+        <button class="btn primary small" type="submit">Send</button>
+      </form>
     </div>
 
     <div id="notifDropdown" class="overlay dropdown-panel hidden">
-      <div class="overlay-header"><strong>Notifications</strong></div>
-      <div id="notifList" class="overlay-body muted">No notifications yet (Phase 8).</div>
+      <div class="overlay-header"><strong>Notifications</strong><button id="markReadBtn" class="link-btn">Mark all read</button></div>
+      <div id="notifList" class="overlay-body"></div>
     </div>
   </div>
   <script src="/js/app.js"></script>

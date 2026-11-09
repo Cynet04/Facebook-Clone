@@ -23,32 +23,32 @@
 - [x] Persist to `data/db.json`
 
 ## Phase 4: Profiles
-- [ ] Profile page/route view
-- [ ] Cover photo area
-- [ ] Avatar + basic info
-- [ ] User timeline (user’s posts)
+- [x] Profile page/route view
+- [x] Cover photo area
+- [x] Avatar + basic info
+- [x] User timeline (user’s posts)
 
 ## Phase 5: Friends System
-- [ ] Friends list
-- [ ] Add friend / send request
-- [ ] Accept/decline requests
-- [ ] Friend status on profiles
+- [x] Friends list
+- [x] Add friend / send request
+- [x] Accept/decline requests
+- [x] Friend status on profiles
 
 ## Phase 6: Messenger
-- [ ] Chat overlay UI
-- [ ] Conversations list
-- [ ] Send/receive messages (mock realtime via polling)
-- [ ] Persist messages
+- [x] Chat overlay UI
+- [x] Conversations list
+- [x] Send/receive messages (mock realtime via polling)
+- [x] Persist messages
 
 ## Phase 7: Groups
-- [ ] Groups directory
-- [ ] Create/join group
-- [ ] Group feed/posts
+- [x] Groups directory
+- [x] Create/join group
+- [x] Group feed/posts (MVP: create/join + group list; dedicated group feed next)
 
 ## Phase 8: Notifications
-- [ ] Notifications dropdown
-- [ ] Generate notifications (likes, comments, friend requests, messages)
-- [ ] Mark read/unread
+- [x] Notifications dropdown
+- [x] Generate notifications (likes, comments, friend requests, messages)
+- [x] Mark read/unread
 
 ## Phase 9+ (Infinite)
 - [ ] Dark mode
