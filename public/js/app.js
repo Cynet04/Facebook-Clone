@@ -89,10 +89,22 @@
 
   function userById(id) { return state.users.find(u => u.id === id) || { name: 'Unknown User', id }; }
 
+  function reactionMeta(key) {
+    return ({ like:['👍','Like','liked'], love:['❤️','Love','loved'], haha:['😆','Haha','reacted-haha'], wow:['😮','Wow','reacted-wow'], sad:['😢','Sad','reacted-sad'], angry:['😠','Angry','reacted-angry'] })[key] || ['👍','Like','liked'];
+  }
+  function reactionSummary(post) {
+    const counts = {};
+    Object.values(post.reactions || {}).forEach(r => counts[r] = (counts[r]||0)+1);
+    if (!Object.keys(counts).length && (post.likes||[]).length) counts.like = post.likes.length;
+    const parts = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `${reactionMeta(k)[0]} ${v}`);
+    return parts.join(' · ') || '0 reactions';
+  }
+
   function postCard(p) {
     const u = userById(p.userId);
-    const liked = (p.likes || []).includes(state.user?.id);
+    const myReaction = p.reactions?.[state.user?.id] || ((p.likes || []).includes(state.user?.id) ? 'like' : null);
     const comments = (state.commentsByPost?.[p.id] || []);
+    const [icon,label,cls] = reactionMeta(myReaction || 'like');
     return `
       <article class="card post" data-post-id="${esc(p.id)}">
         <div class="post-head">
@@ -103,9 +115,14 @@
           </div>
         </div>
         <div class="post-body">${esc(p.content)}</div>
-        <div class="post-stats"><span>${(p.likes||[]).length} likes</span><span>${comments.length} comments</span></div>
+        <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments</span></div>
         <div class="post-actions">
-          <button data-like="${esc(p.id)}" class="${liked?'liked':''}">👍 Like</button>
+          <div class="react-wrap">
+            <button data-react="${esc(p.id)}" data-reaction="${myReaction || 'like'}" class="react-main ${myReaction ? cls : ''}">${myReaction ? icon : '👍'} ${myReaction ? label : 'Like'}</button>
+            <div class="react-picker">
+              ${['like','love','haha','wow','sad','angry'].map(r=>`<button data-react="${esc(p.id)}" data-reaction="${r}" title="${reactionMeta(r)[1]}">${reactionMeta(r)[0]}</button>`).join('')}
+            </div>
+          </div>
           <button data-focus-comment="${esc(p.id)}">💬 Comment</button>
         </div>
         <div class="comments">
@@ -177,7 +194,7 @@
 
   function notifText(n) {
     const actor = userById(n.actorId).name;
-    if (n.type === 'like') return `${actor} liked your post.`;
+    if (n.type === 'like' || n.type === 'reaction') return `${actor} reacted to your post${n.reaction ? ` (${n.reaction})` : ''}.`;
     if (n.type === 'comment') return `${actor} commented on your post.`;
     if (n.type === 'friend_request') return `${actor} sent you a friend request.`;
     if (n.type === 'message') return `${actor} sent you a message.`;
@@ -310,6 +327,11 @@
   });
 
   document.addEventListener('click', async (e) => {
+    const reactBtn = e.target.closest('[data-react]');
+    if (reactBtn && state.user) {
+      await api(`/api/posts/${reactBtn.dataset.react}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactBtn.dataset.reaction || 'like' }) }).catch(()=>{});
+      await loadFeed(); return;
+    }
     const likeBtn = e.target.closest('[data-like]');
     if (likeBtn && state.user) { await api(`/api/posts/${likeBtn.dataset.like}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(()=>{}); await loadFeed(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');

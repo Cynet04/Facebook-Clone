@@ -91,7 +91,7 @@ app.post('/api/posts', (req, res) => {
   const { userId, content } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
-  const post = { id: uid('p'), userId, content, likes: [], createdAt: new Date().toISOString() };
+  const post = { id: uid('p'), userId, content, likes: [], reactions: {}, createdAt: new Date().toISOString() };
   db.posts = db.posts || [];
   db.posts.push(post);
   writeDB(db);
@@ -103,12 +103,39 @@ app.post('/api/posts/:id/like', (req, res) => {
   const post = (db.posts || []).find(p => p.id === req.params.id);
   if (!post) return res.status(404).json({ error: 'Not found' });
   post.likes = post.likes || [];
+  post.reactions = post.reactions || {};
   const idx = post.likes.indexOf(userId);
-  if (idx >= 0) post.likes.splice(idx, 1); else {
+  if (idx >= 0) { post.likes.splice(idx, 1); delete post.reactions[userId]; }
+  else {
     post.likes.push(userId);
+    post.reactions[userId] = 'like';
     if (post.userId && post.userId !== userId) {
       db.notifications = db.notifications || [];
       db.notifications.push({ id: uid('n'), userId: post.userId, type: 'like', actorId: userId, postId: post.id, read: false, createdAt: new Date().toISOString() });
+    }
+  }
+  writeDB(db);
+  res.json(post);
+});
+app.post('/api/posts/:id/react', (req, res) => {
+  const { userId, reaction } = req.body || {};
+  const allowed = new Set(['like','love','haha','wow','sad','angry']);
+  if (!userId || !allowed.has(reaction)) return res.status(400).json({ error: 'Invalid reaction' });
+  const db = readDB();
+  const post = (db.posts || []).find(p => p.id === req.params.id);
+  if (!post) return res.status(404).json({ error: 'Not found' });
+  post.likes = post.likes || [];
+  post.reactions = post.reactions || {};
+  const prev = post.reactions[userId];
+  if (prev === reaction) {
+    delete post.reactions[userId];
+    post.likes = post.likes.filter(id => id !== userId);
+  } else {
+    post.reactions[userId] = reaction;
+    if (!post.likes.includes(userId)) post.likes.push(userId);
+    if (post.userId && post.userId !== userId && !prev) {
+      db.notifications = db.notifications || [];
+      db.notifications.push({ id: uid('n'), userId: post.userId, type: 'reaction', actorId: userId, postId: post.id, reaction, read: false, createdAt: new Date().toISOString() });
     }
   }
   writeDB(db);

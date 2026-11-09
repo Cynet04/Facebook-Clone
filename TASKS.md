@@ -58,10 +58,10 @@
 - [x] Verify layout/readability in dark mode (code-level variable pass)
 
 ## Phase 10: Reactions
-- [ ] Add reaction picker (Like, Love, Haha, Wow, Sad, Angry)
-- [ ] Store per-user reaction on posts
-- [ ] Render reaction counts/summary
-- [ ] Backward compatibility with legacy likes
+- [x] Add reaction picker (Like, Love, Haha, Wow, Sad, Angry)
+- [x] Store per-user reaction on posts
+- [x] Render reaction counts/summary
+- [x] Backward compatibility with legacy likes
 
 ## Phase 11+: Infinite
 - [ ] Search enhancements (highlight, recent searches)
