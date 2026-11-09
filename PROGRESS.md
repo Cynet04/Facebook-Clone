@@ -19,3 +19,4 @@
 - 2026-11-09: Implemented Phase 20 Post Editing & Deletion MVP (owner-checked `PATCH/DELETE /api/posts/:id`, post menu, inline edit/save/cancel, delete confirmation, cleanup of related comments/saved refs). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 21 Comment Edit/Delete MVP (owner-checked `PATCH/DELETE /api/comments/:id`, descendant reply removal on delete, inline comment edit UI, owner actions). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 22 Admin/Moderation stubs (`reports` DB/API, report post/comment actions, local moderator gate in Settings, moderation queue with resolve/dismiss). Tests/syntax passing; pushed to `origin/main`.
+- 2026-11-09: Implemented Phase 23 PWA/Offline stub (web manifest, SVG data icon, service worker shell cache with API offline fallback, SW registration, offline badge). Tests/syntax passing; committing/pushing to `origin/main`.

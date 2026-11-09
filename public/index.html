@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1877f2" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <title>Facebook Clone</title>
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
@@ -14,6 +16,7 @@
         <div class="search-box">
           <input id="globalSearch" type="search" placeholder="Search Facebook" aria-label="Search" />
         </div>
+        <span id="offlineBadge" class="offline-badge hidden">Offline</span>
       </div>
       <nav class="nav-center" aria-label="Primary">
         <a class="nav-icon active" href="#" data-view="home" title="Home">🏠</a>

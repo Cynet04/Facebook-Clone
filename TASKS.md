@@ -148,11 +148,11 @@
 - [x] Verify and commit
 
 ## Phase 23: PWA / Offline Stub
-- [ ] Add web manifest and basic icons metadata (SVG/data stubs)
-- [ ] Add service worker for shell caching (network-first fallback)
-- [ ] Register service worker in frontend
-- [ ] Add offline status indicator in UI
-- [ ] Verify and commit
+- [x] Add web manifest and basic icons metadata (SVG/data stubs)
+- [x] Add service worker for shell caching (network-first fallback)
+- [x] Register service worker in frontend
+- [x] Add offline status indicator in UI
+- [x] Verify and commit
 
 ## Phase 24+: Infinite
 - [ ] Real-time transport mock improvements
