@@ -444,6 +444,7 @@
     }).filter(Boolean).sort((a,b)=>a.days-b.days).slice(0,12);
     $('#birthdaysView').innerHTML = `<div class="card"><h2>Birthdays</h2><p class="muted">Mock upcoming birthdays. Add <code>birthday</code> (YYYY-MM-DD) to users in data for more results.</p></div>${list.length ? list.map(x=>`<div class="card row" style="justify-content:space-between"><div><strong>${esc(x.u.name)}</strong><div class="muted">${x.days===0?'Today':`In ${x.days} day${x.days===1?'':'s'}`} · ${esc(x.next.toLocaleDateString())}</div></div><button class="btn small primary" data-birthday-wish="${esc(x.u.id)}">Send wish</button></div>`).join('') : '<div class="card muted">No upcoming birthdays found.</div>'}`;
   }
+  function renderEvents() {
     const items = (state.eventItems||[]).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     $('#eventsView').innerHTML = `
       <div class="card"><h2>Events</h2><p class="muted">Mock events and RSVP stub.</p>
