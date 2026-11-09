@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facebook Clone</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="navbar" role="banner">
+      <div class="nav-left">
+        <a class="logo" href="#" aria-label="Home">f</a>
+        <div class="search-box">
+          <input id="globalSearch" type="search" placeholder="Search Facebook" aria-label="Search" />
+        </div>
+      </div>
+      <nav class="nav-center" aria-label="Primary">
+        <a class="nav-icon active" href="#" data-view="home" title="Home">🏠</a>
+        <a class="nav-icon" href="#" data-view="friends" title="Friends">👥</a>
+        <a class="nav-icon" href="#" data-view="groups" title="Groups">👥</a>
+      </nav>
+      <div class="nav-right">
+        <button class="icon-btn" id="messengerBtn" title="Messenger">💬</button>
+        <button class="icon-btn" id="notifBtn" title="Notifications">🔔<span id="notifBadge" class="badge hidden">0</span></button>
+        <button class="icon-btn profile-chip" id="profileBtn" title="Account">
+          <span class="avatar-sm" id="navAvatar">U</span>
+        </button>
+        <div class="dropdown hidden" id="accountMenu">
+          <div id="accountInfo"></div>
+          <button id="logoutBtn" class="menu-item">Log Out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar left" aria-label="Shortcuts">
+        <div class="menu-item" data-view="profile"><span class="avatar-sm" id="sideAvatar">U</span><span id="sideName">User</span></div>
+        <div class="menu-item" data-view="friends">Friends</div>
+        <div class="menu-item" data-view="groups">Groups</div>
+        <div class="menu-item muted">Marketplace (soon)</div>
+        <div class="menu-item muted">Watch (soon)</div>
+        <div class="menu-item muted">Memories (soon)</div>
+        <hr />
+        <div class="section-title">Your shortcuts</div>
+        <div class="menu-item muted">No shortcuts yet</div>
+      </aside>
+
+      <section class="feed" aria-label="News Feed">
+        <div id="authGate" class="card auth-gate hidden">
+          <h2>Log in to Facebook Clone</h2>
+          <form id="loginForm" class="stack">
+            <input name="email" type="email" placeholder="Email" required value="demo@example.com" />
+            <input name="password" type="password" placeholder="Password" required value="password" />
+            <button type="submit" class="btn primary">Log In</button>
+          </form>
+          <div class="divider">or</div>
+          <form id="signupForm" class="stack">
+            <input name="name" placeholder="Full name" required />
+            <input name="email" type="email" placeholder="Email" required />
+            <input name="password" type="password" placeholder="New password" required />
+            <button type="submit" class="btn success">Create New Account</button>
+          </form>
+          <p id="authMsg" class="msg"></p>
+        </div>
+
+        <div id="mainView">
+          <div id="homeView">
+            <div class="card composer" id="composerCard">
+              <div class="row">
+                <span class="avatar-sm" id="composerAvatar">U</span>
+                <input id="postInput" placeholder="What's on your mind?" />
+              </div>
+              <div class="composer-actions">
+                <button id="postBtn" class="btn primary small">Post</button>
+              </div>
+            </div>
+            <div id="postsContainer"></div>
+          </div>
+
+          <div id="profileView" class="hidden">
+            <div class="card profile-header">
+              <div class="cover" id="profileCover"></div>
+              <div class="profile-meta">
+                <div class="avatar-lg" id="profileAvatar">U</div>
+                <div>
+                  <h2 id="profileName">User</h2>
+                  <p id="profileSub" class="muted">Timeline</p>
+                </div>
+              </div>
+            </div>
+            <div id="profilePosts"></div>
+          </div>
+
+          <div id="friendsView" class="hidden">
+            <div class="card"><h3>Friends</h3><p class="muted">Friends system coming in Phase 5.</p><div id="friendsList"></div></div>
+          </div>
+
+          <div id="groupsView" class="hidden">
+            <div class="card"><h3>Groups</h3><p class="muted">Groups coming in Phase 7.</p><div id="groupsList"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar right" aria-label="Contacts">
+        <div class="section-title">Sponsored</div>
+        <div class="card subtle muted">Ad space placeholder</div>
+        <hr />
+        <div class="section-title">Contacts</div>
+        <div id="contactsList" class="contacts"></div>
+      </aside>
+    </main>
+
+    <div id="messengerOverlay" class="overlay hidden">
+      <div class="overlay-header"><strong>Messenger</strong><button class="icon-btn" id="closeMessenger">✕</button></div>
+      <div class="overlay-body muted">Messenger coming in Phase 6.</div>
+    </div>
+
+    <div id="notifDropdown" class="overlay dropdown-panel hidden">
+      <div class="overlay-header"><strong>Notifications</strong></div>
+      <div id="notifList" class="overlay-body muted">No notifications yet (Phase 8).</div>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>
