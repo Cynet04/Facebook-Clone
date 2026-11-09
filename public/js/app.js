@@ -195,8 +195,9 @@
             <div class="post-author"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>
             <div class="post-time">${esc(timeAgo(p.createdAt))}${p.editedAt ? ' · Edited' : ''}</div>
           </div>
-          ${p.userId === state.user?.id ? `<div class="post-menu-wrap"><button class="icon-btn small-ghost" data-post-menu="${esc(p.id)}">⋯</button><div class="post-menu hidden" id="post-menu-${esc(p.id)}"><button data-edit-post="${esc(p.id)}">Edit</button><button data-delete-post="${esc(p.id)}">Delete</button></div></div>` : ''}
+          ${p.userId === state.user?.id ? `<div class="post-menu-wrap"><button class="icon-btn small-ghost" data-post-menu="${esc(p.id)}">⋯</button><div class="post-menu hidden" id="post-menu-${esc(p.id)}"><button data-edit-post="${esc(p.id)}">Edit</button><button data-toggle-pin="${esc(p.id)}">${p.pinned?'Unpin':'Pin to profile'}</button><button data-toggle-highlight="${esc(p.id)}">${p.highlighted?'Unhighlight':'Highlight'}</button><button data-delete-post="${esc(p.id)}">Delete</button></div></div>` : ''}
         </div>
+        ${(p.pinned || p.highlighted) ? `<div class="post-flags">${p.pinned?'<span class="pill">Pinned</span>':''}${p.highlighted?'<span class="pill">Highlight</span>':''}</div>` : ''}
         ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
         <div class="post-body" id="post-body-${esc(p.id)}">${esc(p.content)}</div>
         <form class="post-edit hidden stack" id="post-edit-${esc(p.id)}" data-edit-form="${esc(p.id)}"><textarea name="content" maxlength="5000">${esc(p.content)}</textarea><div class="row gap"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-post="${esc(p.id)}">Cancel</button></div></form>
@@ -270,7 +271,7 @@
     renderStories();
     renderScheduled();
     const container = $('#postsContainer');
-    const posts = visiblePosts();
+    const posts = visiblePosts().sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt||0)-new Date(a.createdAt||0));
     if (!posts.length) {
       container.innerHTML = `<div class="card muted">No posts to show.</div>`;
       return;
@@ -309,7 +310,7 @@
       const f = $('#profileEditForm');
       f.name.value = u.name || ''; f.bio.value = u.bio || ''; f.cover.value = u.cover || '';
     }
-    const mine = visiblePosts().filter(p => p.userId === id);
+    const mine = visiblePosts().filter(p => p.userId === id).sort((a,b)=> (b.pinned?1:0)-(a.pinned?1:0) || new Date(b.createdAt||0)-new Date(a.createdAt||0));
     $('#profilePosts').innerHTML = mine.length ? mine.map(p => postCard(p)).join('') : `<div class="card muted">No posts on this timeline yet.</div>`;
   }
 
@@ -607,6 +608,10 @@
     if (cancelEdit) { $(`#post-body-${cancelEdit.dataset.cancelEditPost}`)?.classList.remove('hidden'); $(`#post-edit-${cancelEdit.dataset.cancelEditPost}`)?.classList.add('hidden'); return; }
     const blockBtn = e.target.closest('[data-block-user]');
     if (blockBtn && state.user) { await api(`/api/users/${state.user.id}/block`, { method:'POST', body: JSON.stringify({ targetId: blockBtn.dataset.blockUser }) }).catch(err=>alert(err.message)); await loadFeed(true); return; }
+    const pinBtn = e.target.closest('[data-toggle-pin]');
+    if (pinBtn && state.user) { const p = state.posts.find(x=>x.id===pinBtn.dataset.togglePin); await api(`/api/posts/${pinBtn.dataset.togglePin}/flags`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, pinned: !p?.pinned }) }).catch(err=>alert(err.message)); trackEvent('post_pin'); await loadFeed(true); return; }
+    const hiBtn = e.target.closest('[data-toggle-highlight]');
+    if (hiBtn && state.user) { const p = state.posts.find(x=>x.id===hiBtn.dataset.toggleHighlight); await api(`/api/posts/${hiBtn.dataset.toggleHighlight}/flags`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, highlighted: !p?.highlighted }) }).catch(err=>alert(err.message)); trackEvent('post_highlight'); await loadFeed(true); return; }
     const delBtn = e.target.closest('[data-delete-post]');
     if (delBtn && state.user) { if (!confirm('Delete this post?')) return; await api(`/api/posts/${delBtn.dataset.deletePost}?userId=${encodeURIComponent(state.user.id)}`, { method:'DELETE' }).catch(err=>alert(err.message)); await loadFeed(true); return; }
     const reportPost = e.target.closest('[data-report-post]');

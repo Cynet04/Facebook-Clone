@@ -245,9 +245,16 @@
 - [x] Persist flags via API
 - [x] Verify and commit
 
-## Phase 37+: Infinite
-- [ ] Profile/about details expansion
+## Phase 37: Profile / About Details Expansion
+- [ ] Add extended profile fields (work, education, location, relationship, website)
+- [ ] Add profile "About" section/tab UI
+- [ ] Add API support to read/update about fields (owner-only)
+- [ ] Show about info on profile and in settings/profile edit
+- [ ] Verify and commit
+
+## Phase 38+: Infinite
 - [ ] Friend suggestions algorithm mock
 - [ ] Hashtags/mentions stub
 - [ ] Link previews mock
+- [ ] Poll posts
 - [ ] ...continue indefinitely
