@@ -135,9 +135,10 @@
             <div class="post-time">${esc(timeAgo(p.createdAt))}</div>
           </div>
         </div>
+        ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
         <div class="post-body">${esc(p.content)}</div>
         ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
-        <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments</span></div>
+        <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>
         <div class="post-actions">
           <div class="react-wrap">
             <button data-react="${esc(p.id)}" data-reaction="${myReaction || 'like'}" class="react-main ${myReaction ? cls : ''}">${myReaction ? icon : '👍'} ${myReaction ? label : 'Like'}</button>
@@ -146,6 +147,7 @@
             </div>
           </div>
           <button data-focus-comment="${esc(p.id)}">💬 Comment</button>
+          <button data-share-post="${esc(p.id)}">↗️ Share</button>
           <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?'🔖 Saved':'🔖 Save'}</button>
         </div>
         <div class="comments">
@@ -270,6 +272,7 @@
     const actor = userById(n.actorId).name;
     if (n.type === 'like' || n.type === 'reaction') return `${actor} reacted to your post${n.reaction ? ` (${n.reaction})` : ''}.`;
     if (n.type === 'comment') return `${actor} commented on your post.`;
+    if (n.type === 'share') return `${actor} shared your post.`;
     if (n.type === 'friend_request') return `${actor} sent you a friend request.`;
     if (n.type === 'message') return `${actor} sent you a message.`;
     return 'New notification';
@@ -466,6 +469,12 @@
     }
     const likeBtn = e.target.closest('[data-like]');
     if (likeBtn && state.user) { await api(`/api/posts/${likeBtn.dataset.like}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(()=>{}); await loadFeed(); return; }
+    const shareBtn = e.target.closest('[data-share-post]');
+    if (shareBtn && state.user) {
+      if (state._sharing) return; state._sharing = true;
+      await api(`/api/posts/${shareBtn.dataset.sharePost}/share`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      state._sharing = false; await loadFeed(true); return;
+    }
     const saveBtn = e.target.closest('[data-save-post]');
     if (saveBtn && state.user) {
       await api(`/api/users/${state.user.id}/save`, { method:'POST', body: JSON.stringify({ postId: saveBtn.dataset.savePost }) }).catch(err=>alert(err.message));

@@ -112,9 +112,16 @@
 - [x] Keep search/profile rendering compatible
 - [x] Verify and commit
 
-## Phase 18+: Infinite
+## Phase 18: Post Sharing / Repost (MVP)
+- [x] Add repost/share data model on posts
+- [x] Add Share action on post cards
+- [x] Render shared post attribution/content
+- [x] Prevent duplicate rapid shares (basic client guard)
+- [x] Verify and commit
+
+## Phase 19+: Infinite
 - [ ] Admin/moderation stubs
 - [ ] PWA/offline stub
 - [ ] Comment replies/reactions
-- [ ] Post sharing/repost
+- [ ] Real-time transport mock improvements
 - [ ] ...continue indefinitely

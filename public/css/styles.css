@@ -103,6 +103,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
 .post-head { display: flex; gap: 10px; align-items: center; }
 .post-author { font-weight: 600; }
 .post-time { font-size: 12px; color: var(--muted); }
+.shared-note { font-size: 13px; margin-bottom: 4px; }
 .post-body { margin: 10px 0; white-space: pre-wrap; word-break: break-word; }
 .post-stats { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; padding: 4px 0; }
 .post-actions { display: flex; gap: 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 6px 0; align-items: center; }

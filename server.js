@@ -116,6 +116,33 @@ app.post('/api/posts', (req, res) => {
   writeDB(db);
   res.status(201).json(post);
 });
+app.post('/api/posts/:id/share', (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const original = (db.posts || []).find(p => p.id === req.params.id);
+  if (!original) return res.status(404).json({ error: 'Not found' });
+  original.shares = original.shares || 0;
+  original.shares += 1;
+  const shared = {
+    id: uid('p'),
+    userId,
+    content: original.content || '',
+    imageUrl: original.imageUrl || '',
+    likes: [], reactions: {}, shares: 0,
+    sharedFrom: { postId: original.id, userId: original.userId, createdAt: original.createdAt },
+    createdAt: new Date().toISOString()
+  };
+  db.posts = db.posts || [];
+  db.posts.push(shared);
+  if (original.userId && original.userId !== userId) {
+    db.notifications = db.notifications || [];
+    db.notifications.push({ id: uid('n'), userId: original.userId, type: 'share', actorId: userId, postId: original.id, read: false, createdAt: new Date().toISOString() });
+  }
+  writeDB(db);
+  res.status(201).json(shared);
+});
+
 app.post('/api/posts/:id/like', (req, res) => {
   const { userId } = req.body || {};
   const db = readDB();
