@@ -2,6 +2,7 @@
   const state = {
     user: JSON.parse(localStorage.getItem('fb_user') || 'null'),
     token: localStorage.getItem('fb_token') || '',
+    theme: localStorage.getItem('fb_theme') || 'light',
     users: [],
     posts: [],
     notifications: [],
@@ -25,6 +26,16 @@
     if (s < 60) return 'Just now'; const m = Math.floor(s/60); if (m<60) return `${m}m`; const h=Math.floor(m/60); if (h<24) return `${h}h`; const days=Math.floor(h/24); return `${days}d`;
   };
 
+  function applyTheme() {
+    document.documentElement.dataset.theme = state.theme === 'dark' ? 'dark' : 'light';
+    localStorage.setItem('fb_theme', state.theme);
+    const btn = $('#themeBtn');
+    if (btn) btn.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    const menuBtn = $('#themeMenuBtn');
+    if (menuBtn) menuBtn.textContent = state.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+  }
+  function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); }
+
   async function api(path, opts = {}) {
     const res = await fetch(path, { headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
     const data = await res.json().catch(() => ({}));
@@ -36,7 +47,11 @@
     state.user = user; state.token = token;
     if (user) localStorage.setItem('fb_user', JSON.stringify(user)); else localStorage.removeItem('fb_user');
     if (token) localStorage.setItem('fb_token', token); else localStorage.removeItem('fb_token');
-    renderAuth();
+  $('#themeBtn')?.addEventListener('click', toggleTheme);
+  $('#themeMenuBtn')?.addEventListener('click', () => { toggleTheme(); $('#accountMenu').classList.add('hidden'); });
+
+  renderAuth();
+  applyTheme();
   }
 
   function refreshSessionUser() {
