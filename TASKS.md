@@ -119,9 +119,16 @@
 - [x] Prevent duplicate rapid shares (basic client guard)
 - [x] Verify and commit
 
-## Phase 19+: Infinite
+## Phase 19: Comment Replies & Comment Reactions (MVP)
+- [ ] Add comment reply data model (`parentId`)
+- [ ] Add comment reaction data/API (mock)
+- [ ] Render nested replies and reply composer
+- [ ] Render comment reaction buttons/counts
+- [ ] Verify and commit
+
+## Phase 20+: Infinite
 - [ ] Admin/moderation stubs
 - [ ] PWA/offline stub
-- [ ] Comment replies/reactions
 - [ ] Real-time transport mock improvements
+- [ ] Post editing/deletion
 - [ ] ...continue indefinitely

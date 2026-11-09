@@ -14,4 +14,4 @@
 - 2026-11-09: Implemented Phase 15 Bookmarks/Saved Posts (`/api/users/:id/save` toggle, Save button on posts, Saved view). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 16 Settings & Privacy mock (Settings view, localStorage-persisted audience/privacy toggles, session panel, profile audience label). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 17 feed pagination mock (paginated `/api/posts` with `limit`/`offset`, frontend incremental load + Load more, dedupe/order preservation). Tests/syntax passing; pushed to `origin/main`. Note: minor duplicate settings helper definitions exist in `public/js/app.js` (cleanup pending).
-- 2026-11-09: Implemented Phase 18 Post Sharing/Repost MVP (`/api/posts/:id/share`, share action, attribution UI, share count/notification, basic rapid-share guard). Tests/syntax passing; committing/pushing to `origin/main`.
+- 2026-11-09: Implemented Phase 18 Post Sharing/Repost MVP (`/api/posts/:id/share`, share action, attribution UI, share count/notification, basic rapid-share guard). Tests/syntax passing; pushed to `origin/main`.
