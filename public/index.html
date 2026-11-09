@@ -102,6 +102,14 @@
                 <input id="postImageInput" placeholder="Image URL (optional, https://...)" />
                 <input id="postScheduleInput" type="datetime-local" title="Schedule post (optional)" aria-label="Schedule post" />
               </div>
+              <details class="composer-poll muted"><summary>Add poll (optional)</summary>
+                <div class="stack" style="margin-top:8px">
+                  <input id="pollOpt1" placeholder="Poll option 1" maxlength="80" />
+                  <input id="pollOpt2" placeholder="Poll option 2" maxlength="80" />
+                  <input id="pollOpt3" placeholder="Poll option 3 (optional)" maxlength="80" />
+                  <input id="pollOpt4" placeholder="Poll option 4 (optional)" maxlength="80" />
+                </div>
+              </details>
               <div class="composer-actions row gap" style="justify-content:flex-end">
                 <button id="schedulePostBtn" class="btn small">Schedule</button>
                 <button id="postBtn" class="btn primary small">Post</button>

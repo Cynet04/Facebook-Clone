@@ -210,6 +210,7 @@
         ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
         <div class="post-body" id="post-body-${esc(p.id)}">${richText(p.content)}</div>
         ${linkPreviewHtml(p.content)}
+        ${pollHtml(p)}
         <form class="post-edit hidden stack" id="post-edit-${esc(p.id)}" data-edit-form="${esc(p.id)}"><textarea name="content" maxlength="5000">${esc(p.content)}</textarea><div class="row gap"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-post="${esc(p.id)}">Cancel</button></div></form>
         ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>
@@ -545,16 +546,19 @@
     const input = $('#postInput'); const content = input.value.trim();
     const imageUrl = ($('#postImageInput')?.value || '').trim();
     const scheduledFor = ($('#postScheduleInput')?.value || '').trim();
+    const pollOpts = ['#pollOpt1','#pollOpt2','#pollOpt3','#pollOpt4'].map(s=>($(s)?.value||'').trim()).filter(Boolean);
     if (!content || !state.user) return;
     if (imageUrl && !/^https?:\/\//i.test(imageUrl)) { alert('Image URL must start with http(s)://'); return; }
+    if (pollOpts.length === 1) { alert('Poll needs at least 2 options'); return; }
     const payload = { userId: state.user.id, content, imageUrl };
+    if (pollOpts.length >= 2) payload.poll = { question: content, options: pollOpts };
     if (scheduled) {
       if (!scheduledFor) { alert('Pick a schedule time'); return; }
       payload.scheduledFor = new Date(scheduledFor).toISOString();
     }
     await api('/api/posts', { method: 'POST', body: JSON.stringify(payload) }).catch(e=>alert(e.message));
-    trackEvent(scheduled ? 'post_schedule' : 'post_create', { hasImage: !!imageUrl });
-    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; if ($('#postScheduleInput')) $('#postScheduleInput').value = ''; await loadFeed(true);
+    trackEvent(scheduled ? 'post_schedule' : (payload.poll ? 'post_poll_create' : 'post_create'), { hasImage: !!imageUrl, hasPoll: !!payload.poll });
+    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; if ($('#postScheduleInput')) $('#postScheduleInput').value = ''; ['#pollOpt1','#pollOpt2','#pollOpt3','#pollOpt4'].forEach(s=>{ if($(s)) $(s).value=''; }); await loadFeed(true);
   }
   $('#postBtn').addEventListener('click', () => submitPost(false));
   $('#schedulePostBtn')?.addEventListener('click', () => submitPost(true));
@@ -672,6 +676,8 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    const pollVote = e.target.closest('[data-poll-vote]');
+    if (pollVote && state.user) { await api(`/api/posts/${pollVote.dataset.pollVote}/poll/vote`, { method:'POST', body: JSON.stringify({ userId: state.user.id, optionId: pollVote.dataset.optionId }) }).catch(err=>alert(err.message)); trackEvent('poll_vote'); await loadFeed(); return; }
     const hash = e.target.closest('[data-hashtag]');
     if (hash) { e.preventDefault(); state.searchQuery = hash.dataset.hashtag; $('#globalSearch').value = state.searchQuery; state.view = 'search'; trackEvent('hashtag_click', { tag: state.searchQuery }); renderView(); return; }
     const profileLink = e.target.closest('[data-open-profile]');

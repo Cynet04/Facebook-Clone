@@ -180,7 +180,7 @@ app.get('/api/posts', (req, res) => {
   res.json({ items: posts.slice(offset, offset + limit), total: posts.length, offset, limit });
 });
 app.post('/api/posts', writeLimit, (req, res) => {
-  const { userId, content, imageUrl, scheduledFor } = req.body || {};
+  const { userId, content, imageUrl, scheduledFor, poll } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
   const img = String(imageUrl || '').trim();
   if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
@@ -190,12 +190,30 @@ app.post('/api/posts', writeLimit, (req, res) => {
     if (!Number.isFinite(t) || t <= Date.now() + 30 * 1000) return res.status(400).json({ error: 'scheduledFor must be > 30s in future' });
     sched = new Date(t).toISOString();
   }
+  let pollData = null;
+  if (poll && Array.isArray(poll.options)) {
+    const options = poll.options.map(o => String(o||'').trim()).filter(Boolean).slice(0,4);
+    if (options.length >= 2) pollData = { question: String(poll.question || content).slice(0,200), options: options.map(t => ({ id: uid('po'), text: t.slice(0,80), votes: [] })) };
+  }
   const db = readDB();
-  const post = { id: uid('p'), userId, content: String(content).slice(0, 5000), imageUrl: img.slice(0, 500), likes: [], reactions: {}, shares: 0, status: sched ? 'scheduled' : 'published', createdAt: sched ? null : new Date().toISOString(), ...(sched ? { scheduledFor: sched } : {}) };
+  const post = { id: uid('p'), userId, content: String(content).slice(0, 5000), imageUrl: img.slice(0, 500), likes: [], reactions: {}, shares: 0, ...(pollData ? { poll: pollData } : {}), status: sched ? 'scheduled' : 'published', createdAt: sched ? null : new Date().toISOString(), ...(sched ? { scheduledFor: sched } : {}) };
   db.posts = db.posts || [];
   db.posts.push(post);
   writeDB(db);
   res.status(201).json(post);
+});
+app.post('/api/posts/:id/poll/vote', writeLimit, (req, res) => {
+  const { userId, optionId } = req.body || {};
+  if (!userId || !optionId) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const post = (db.posts || []).find(p => p.id === req.params.id);
+  if (!post || !post.poll) return res.status(404).json({ error: 'Poll not found' });
+  post.poll.options.forEach(o => { o.votes = (o.votes || []).filter(id => id !== userId); });
+  const opt = post.poll.options.find(o => o.id === optionId);
+  if (!opt) return res.status(400).json({ error: 'Invalid option' });
+  opt.votes.push(userId);
+  writeDB(db);
+  res.json(post.poll);
 });
 app.patch('/api/posts/:id', (req, res) => {
   const { userId, content } = req.body || {};
