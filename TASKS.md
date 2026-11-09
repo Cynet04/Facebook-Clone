@@ -252,9 +252,16 @@
 - [x] Show about info on profile and in settings/profile edit
 - [x] Verify and commit
 
-## Phase 38+: Infinite
-- [ ] Friend suggestions algorithm mock
+## Phase 38: Friend Suggestions Algorithm (Mock)
+- [ ] Add `/api/users/:id/suggestions` using mutual-friends heuristic
+- [ ] Rank suggestions by mutual count and exclude blocked/friends/pending/self
+- [ ] Update Friends/People UI to show mutual-friend counts and reasons
+- [ ] Track suggestion interactions (add friend/block) via analytics
+- [ ] Verify and commit
+
+## Phase 39+: Infinite
 - [ ] Hashtags/mentions stub
 - [ ] Link previews mock
 - [ ] Poll posts
+- [ ] Watch/videos stub
 - [ ] ...continue indefinitely
