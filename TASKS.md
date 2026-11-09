@@ -154,9 +154,16 @@
 - [x] Add offline status indicator in UI
 - [x] Verify and commit
 
-## Phase 24+: Infinite
-- [ ] Real-time transport mock improvements
+## Phase 24: Real-time Transport Mock Improvements
+- [ ] Add lightweight polling intervals for feed/messages/notifications visibility
+- [ ] Add "last updated" indicator and manual refresh control
+- [ ] Reduce unnecessary reloads by checking view/state guards
+- [ ] Add basic API error surface in UI status line
+- [ ] Verify and commit
+
+## Phase 25+: Infinite
 - [ ] User blocking/reporting mock expansion
 - [ ] Accessibility pass
 - [ ] Performance polish
+- [ ] i18n stub
 - [ ] ...continue indefinitely
