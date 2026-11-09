@@ -99,6 +99,20 @@ app.patch('/api/users/:id', (req, res) => {
   safe.savedPosts = safe.savedPosts || [];
   res.json(safe);
 });
+app.get('/api/users/:id/suggestions', (req, res) => {
+  const db = readDB();
+  const me = db.users.find(u => u.id === req.params.id);
+  if (!me) return res.status(404).json({ error: 'Not found' });
+  const myFriends = new Set(me.friends || []);
+  const blocked = new Set([...(me.blockedUsers || []), ...db.users.filter(u => (u.blockedUsers||[]).includes(me.id)).map(u => u.id)]);
+  const exclude = new Set([me.id, ...myFriends, ...(me.friendRequests || []), ...blocked]);
+  const suggestions = db.users.filter(u => !exclude.has(u.id)).map(u => {
+    const mutual = (u.friends || []).filter(id => myFriends.has(id));
+    return { id: u.id, name: u.name, avatar: u.avatar || '', mutualCount: mutual.length, mutualIds: mutual.slice(0,3), reason: mutual.length ? `${mutual.length} mutual friend${mutual.length>1?'s':''}` : 'Suggested for you' };
+  }).sort((a,b)=>b.mutualCount-a.mutualCount || a.name.localeCompare(b.name)).slice(0,12);
+  res.json(suggestions);
+});
+
 app.post('/api/users/:id/block', (req, res) => {
   const { targetId } = req.body || {};
   if (!targetId || targetId === req.params.id) return res.status(400).json({ error: 'Invalid target' });

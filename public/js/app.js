@@ -15,7 +15,7 @@
     marketplace: [],
     scheduledPosts: [],
     reports: [],
-    notifications: [],
+    suggestions: [],
     groups: [],
     groupPosts: [],
     activeGroupId: null,
@@ -328,8 +328,8 @@
     const b = blockedIds();
     const reqs = (me.friendRequests || []).filter(id => !b.has(id)).map(id => userById(id));
     $('#friendRequests').innerHTML = reqs.length ? reqs.map(u => `<div class="list-row"><span class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><strong>${esc(u.name)}</strong></span><span class="row gap"><button class="btn primary small" data-respond-friend="${esc(u.id)}" data-accept="1">Confirm</button><button class="btn small" data-respond-friend="${esc(u.id)}" data-accept="0">Delete</button></span></div>`).join('') : '<div class="muted">No friend requests.</div>';
-    const people = state.users.filter(u => u.id !== me.id && !b.has(u.id) && !(me.friends||[]).includes(u.id) && !(me.friendRequests||[]).includes(u.id));
-    $('#peopleList').innerHTML = people.length ? people.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><span class="row gap"><button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button></span></div>`).join('') : '<div class="muted">No suggestions.</div>';
+    const people = (state.suggestions || []).filter(u => !b.has(u.id));
+    $('#peopleList').innerHTML = people.length ? people.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span><div>${esc(u.name)}</div><div class="muted" style="font-size:12px">${esc(u.reason||'Suggested for you')}</div></span></a><span class="row gap"><button class="btn primary small" data-add-friend="${esc(u.id)}">Add Friend</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button></span></div>`).join('') : '<div class="muted">No suggestions.</div>';
     const friends = (me.friends || []).filter(id => !b.has(id)).map(id => userById(id));
     $('#friendsList').innerHTML = friends.length ? friends.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><span class="row gap"><button class="btn small" data-message-user="${esc(u.id)}">Message</button><button class="btn small" data-block-user="${esc(u.id)}">Block</button></span></div>`).join('') : '<div class="muted">No friends yet.</div>';
   }
@@ -472,6 +472,7 @@
     } catch { state.stories = []; state.scheduledStories = []; }
     try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
+    try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
   }
   async function loadFeed(reset = false) {
