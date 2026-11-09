@@ -140,9 +140,16 @@
 - [x] Refresh affected post comments after mutations
 - [x] Verify and commit
 
-## Phase 22+: Infinite
-- [ ] Admin/moderation stubs
+## Phase 22: Admin/Moderation Stubs
+- [ ] Add admin/moderation view (mock, gated by local flag)
+- [ ] Add report-post/report-comment API stubs and UI actions
+- [ ] Add moderation queue display from JSON DB
+- [ ] Add mock resolve/dismiss actions
+- [ ] Verify and commit
+
+## Phase 23+: Infinite
 - [ ] PWA/offline stub
 - [ ] Real-time transport mock improvements
-- [ ] User blocking/reporting mock
+- [ ] User blocking/reporting mock expansion
+- [ ] Accessibility pass
 - [ ] ...continue indefinitely
