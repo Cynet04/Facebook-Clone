@@ -238,9 +238,16 @@
 - [x] Surface rate-limit status in diagnostics/client errors
 - [x] Verify and commit
 
-## Phase 36+: Infinite
-- [ ] Post pinning/highlights
+## Phase 36: Post Pinning / Highlights
+- [x] Add pinned/highlight flags on posts (owner-only)
+- [x] Add pin/unpin and highlight actions in post menu
+- [x] Render pinned posts at top of profile and optional feed badge
+- [x] Persist flags via API
+- [x] Verify and commit
+
+## Phase 37+: Infinite
 - [ ] Profile/about details expansion
 - [ ] Friend suggestions algorithm mock
 - [ ] Hashtags/mentions stub
+- [ ] Link previews mock
 - [ ] ...continue indefinitely
