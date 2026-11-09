@@ -203,9 +203,16 @@
 - [x] Add diagnostics panel entry showing DB counts
 - [x] Verify and commit
 
-## Phase 31+: Infinite
-- [ ] Developer/admin diagnostics panel
+## Phase 31: Developer/Admin Diagnostics Panel
+- [x] Add diagnostics endpoint with expanded runtime info (counts, uptime, node version)
+- [x] Add in-app diagnostics panel with refresh button
+- [x] Show recent client errors/status in diagnostics (mock-safe)
+- [x] Add moderator-gated access hint (reuse settings flag)
+- [x] Verify and commit
+
+## Phase 32+: Infinite
 - [ ] Analytics/events stub
 - [ ] Scheduled posts/stories mock
 - [ ] Rate limiting/security hardening mock
+- [ ] Post pinning/highlights
 - [ ] ...continue indefinitely

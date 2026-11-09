@@ -478,7 +478,12 @@ app.get('/api/admin/export', (req, res) => {
 });
 app.get('/api/admin/diagnostics', (req, res) => {
   const db = readDB();
-  res.json({ time: new Date().toISOString(), counts: Object.fromEntries(Object.entries(db).map(([k,v]) => [k, Array.isArray(v)?v.length:0])) });
+  res.json({
+    time: new Date().toISOString(),
+    uptimeSec: Math.round(process.uptime()),
+    node: process.version,
+    counts: Object.fromEntries(Object.entries(db).map(([k,v]) => [k, Array.isArray(v)?v.length:0]))
+  });
 });
 app.post('/api/admin/import', (req, res) => {
   const { mode, db } = req.body || {};

@@ -217,7 +217,12 @@
   function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
   function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
   async function renderDiagnostics() {
-    try { const d = await api('/api/admin/diagnostics'); $('#diagnosticsPanel').innerHTML = `<strong>DB counts:</strong> ${Object.entries(d.counts||{}).map(([k,v])=>`${k}=${v}`).join(' · ')}`; } catch { $('#diagnosticsPanel').textContent = 'Diagnostics unavailable.'; }
+    const gate = !state.settings.isModerator ? ' (enable moderator flag in settings for full mock access context)' : '';
+    try {
+      const d = await api('/api/admin/diagnostics');
+      $('#diagnosticsPanel').innerHTML = `<strong>Server${gate}:</strong> up ${esc(d.uptimeSec)}s · node ${esc(d.node)} · ${Object.entries(d.counts||{}).map(([k,v])=>`${k}=${v}`).join(' · ')}`;
+    } catch { $('#diagnosticsPanel').textContent = 'Diagnostics unavailable.'; }
+    $('#clientDiagnostics').textContent = `Client: view=${state.view} · posts=${state.posts.length}/${state.postsTotal||0} · last=${state.lastUpdatedAt ? new Date(state.lastUpdatedAt).toLocaleTimeString() : 'never'} · error=${state.lastError || 'none'}`;
   }
   function renderSettings() {
     const f = $('#settingsForm'); if (!f) return;
@@ -521,6 +526,7 @@
     renderProfile(); renderSettings();
   });
 
+  $('#refreshDiagnosticsBtn')?.addEventListener('click', () => renderDiagnostics());
   $('#exportDataBtn')?.addEventListener('click', async () => {
     const data = await api('/api/admin/export').catch(err=>{ alert(err.message); return null; }); if (!data) return;
     const blob = new Blob([JSON.stringify(data.db, null, 2)], { type: 'application/json' });
