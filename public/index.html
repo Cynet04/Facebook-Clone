@@ -19,6 +19,7 @@
         <a class="nav-icon active" href="#" data-view="home" title="Home">🏠</a>
         <a class="nav-icon" href="#" data-view="friends" title="Friends">👥</a>
         <a class="nav-icon" href="#" data-view="groups" title="Groups">👥</a>
+        <a class="nav-icon" href="#" data-view="marketplace" title="Marketplace">🛍️</a>
       </nav>
       <div class="nav-right">
         <button class="icon-btn" id="themeBtn" title="Toggle dark mode">🌙</button>
@@ -42,7 +43,7 @@
         <div class="menu-item" data-view="friends">Friends</div>
         <div class="menu-item" data-view="groups">Groups</div>
         <div class="menu-item" data-view="messenger">Messenger</div>
-        <div class="menu-item muted">Marketplace (soon)</div>
+        <div class="menu-item" data-view="marketplace">Marketplace</div>
         <div class="menu-item muted">Watch (soon)</div>
         <hr />
         <div class="section-title">Your shortcuts</div>
@@ -155,6 +156,18 @@
               <p id="searchMeta" class="muted"></p>
               <div id="searchResults"></div>
             </div>
+          </div>
+
+          <div id="marketplaceView" class="hidden">
+            <div class="card">
+              <h3>Create Listing</h3>
+              <form id="marketplaceForm" class="stack">
+                <div class="row gap"><input name="title" placeholder="Title" required maxlength="120" /><input name="price" placeholder="Price" required maxlength="40" /></div>
+                <div class="row gap"><input name="location" placeholder="Location" maxlength="80" /><input name="imageUrl" placeholder="Image URL (optional)" maxlength="500" /></div>
+                <button class="btn primary small" type="submit">List Item</button>
+              </form>
+            </div>
+            <div class="card"><h3>Marketplace</h3><div id="marketplaceList" class="market-grid"></div></div>
           </div>
         </div>
       </section>

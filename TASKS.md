@@ -84,9 +84,16 @@
 - [x] Basic client/server validation for image URL
 - [x] Verify and commit
 
-## Phase 14+: Infinite
-- [ ] Marketplace stub
+## Phase 14: Marketplace Stub
+- [x] Add marketplace data model/API (mock listings)
+- [x] Add Marketplace view/navigation
+- [x] Allow creating a listing (title, price, location, image URL)
+- [x] Render listings grid/cards
+- [x] Verify and commit
+
+## Phase 15+: Infinite
 - [ ] Privacy/settings mock
 - [ ] Bookmarks/saved posts
 - [ ] Pagination/infinite scroll mock
+- [ ] Admin/moderation stubs
 - [ ] ...continue indefinitely

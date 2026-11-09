@@ -6,6 +6,7 @@
     users: [],
     posts: [],
     stories: [],
+    marketplace: [],
     notifications: [],
     groups: [],
     groupPosts: [],
@@ -88,13 +89,14 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
     if (state.view === 'friends') renderFriends();
     if (state.view === 'groups') renderGroups();
     if (state.view === 'messenger') renderMessengerPage();
+    if (state.view === 'marketplace') renderMarketplace();
     if (state.view === 'search') renderSearch();
   }
 
@@ -287,6 +289,20 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
+  function renderMarketplace() {
+    const el = $('#marketplaceList');
+    if (!el) return;
+    el.innerHTML = state.marketplace.length ? state.marketplace.map(m => `
+      <div class="market-card">
+        ${m.imageUrl ? `<img src="${esc(m.imageUrl)}" alt="${esc(m.title)}" loading="lazy" />` : `<div class="market-placeholder">No image</div>`}
+        <div class="market-body">
+          <div class="market-price">$${esc(m.price)}</div>
+          <div class="market-title">${esc(m.title)}</div>
+          <div class="muted">${esc(m.location || 'No location')} · ${esc(userById(m.userId).name)}</div>
+        </div>
+      </div>`).join('') : '<div class="muted">No listings yet.</div>';
+  }
+
   function renderSearch() {
     const q = state.searchQuery.toLowerCase().trim();
     const meta = $('#searchMeta');
@@ -315,6 +331,7 @@
     try { state.groups = await api('/api/groups'); } catch { state.groups = []; }
     try { state.messages = await api(`/api/messages?userId=${encodeURIComponent(state.user.id)}`); } catch { state.messages = []; }
     try { state.stories = await api('/api/stories'); } catch { state.stories = []; }
+    try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
     renderNotifications();
   }
   async function loadFeed() {
@@ -372,6 +389,14 @@
     if (e.key !== 'Enter') return;
     state.searchQuery = e.target.value.trim();
     state.view = 'search'; renderView();
+  });
+
+  $('#marketplaceForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    if (data.imageUrl && !/^https?:\/\//i.test(String(data.imageUrl))) { alert('Image URL must start with http(s)://'); return; }
+    await api('/api/marketplace', { method:'POST', body: JSON.stringify({ ...data, userId: state.user.id }) }).catch(err=>alert(err.message));
+    e.target.reset(); await loadAux(); renderMarketplace();
   });
 
   $('#groupCreateForm').addEventListener('submit', async (e) => {

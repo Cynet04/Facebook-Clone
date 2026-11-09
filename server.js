@@ -18,7 +18,7 @@ function readDB() {
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(raw);
   } catch (e) {
-    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [] };
+    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [] };
   }
 }
 
@@ -296,6 +296,24 @@ app.post('/api/stories', (req, res) => {
   db.stories.push(story);
   writeDB(db);
   res.status(201).json(story);
+});
+
+// Marketplace (Phase 14)
+app.get('/api/marketplace', (req, res) => {
+  const db = readDB();
+  res.json([...(db.marketplace || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
+});
+app.post('/api/marketplace', (req, res) => {
+  const { userId, title, price, location, imageUrl } = req.body || {};
+  if (!userId || !title || price === undefined || price === '') return res.status(400).json({ error: 'Missing fields' });
+  const img = String(imageUrl || '').trim();
+  if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
+  const db = readDB();
+  const listing = { id: uid('mk'), userId, title: String(title).slice(0,120), price: String(price).slice(0,40), location: String(location||'').slice(0,80), imageUrl: img.slice(0,500), createdAt: new Date().toISOString() };
+  db.marketplace = db.marketplace || [];
+  db.marketplace.push(listing);
+  writeDB(db);
+  res.status(201).json(listing);
 });
 
 // SPA-ish fallback for hash routing / direct loads
