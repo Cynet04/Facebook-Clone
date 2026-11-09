@@ -217,8 +217,15 @@
 - [x] Surface event counts in diagnostics panel
 - [x] Verify and commit
 
-## Phase 33+: Infinite
-- [ ] Scheduled posts/stories mock
+## Phase 33: Scheduled Posts (Mock)
+- [ ] Add scheduled post fields/API (`scheduledFor`, status) with mock scheduler check
+- [ ] Add schedule option in composer UI (datetime-local)
+- [ ] Show scheduled posts in a "Scheduled" section (owner-only mock view)
+- [ ] Publish due scheduled posts on load/poll (client-side mock trigger)
+- [ ] Verify and commit
+
+## Phase 34+: Infinite
+- [ ] Scheduled stories mock
 - [ ] Rate limiting/security hardening mock
 - [ ] Post pinning/highlights
 - [ ] Profile/about details expansion
