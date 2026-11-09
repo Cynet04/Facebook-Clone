@@ -301,9 +301,16 @@
 - [x] Track event interactions via analytics
 - [x] Verify and commit
 
-## Phase 45+: Infinite
-- [ ] Birthdays stub
+## Phase 45: Birthdays Stub
+- [ ] Add birthday fields/helpers and mock upcoming birthdays list
+- [ ] Add Birthdays view/card in sidebar/home
+- [ ] Allow quick "wish" interaction (mock notification/analytics)
+- [ ] Handle empty states
+- [ ] Verify and commit
+
+## Phase 46+: Infinite
 - [ ] Fundraisers stub
 - [ ] Pages stub
 - [ ] Saved collections/folders
+- [ ] Reels stub
 - [ ] ...continue indefinitely
