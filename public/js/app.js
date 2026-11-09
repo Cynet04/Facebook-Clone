@@ -538,15 +538,31 @@
   function renderMarketplace() {
     const el = $('#marketplaceList');
     if (!el) return;
-    el.innerHTML = state.marketplace.length ? state.marketplace.map(m => `
-      <div class="market-card">
-        ${m.imageUrl ? `<img src="${esc(m.imageUrl)}" alt="${esc(m.title)}" loading="lazy" />` : `<div class="market-placeholder">No image</div>`}
-        <div class="market-body">
-          <div class="market-price">$${esc(m.price)}</div>
-          <div class="market-title">${esc(m.title)}</div>
-          <div class="muted">${esc(m.location || 'No location')} · ${esc(userById(m.userId).name)}</div>
-        </div>
-      </div>`).join('') : '<div class="muted">No listings yet.</div>';
+    const favs = new Set((userById(state.user?.id).marketplaceFavorites || []).map(f => f.listingId));
+    el.innerHTML = `
+      <form id="marketplaceFilters" class="row gap" style="margin-bottom:10px;flex-wrap:wrap">
+        <input name="search" placeholder="Search listings..." />
+        <select name="category"><option value="">All Categories</option><option>General</option><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Vehicles</option></select>
+        <input name="minPrice" type="number" placeholder="Min price" min="0" step="1" />
+        <input name="maxPrice" type="number" placeholder="Max price" min="0" step="1" />
+        <input name="location" placeholder="Location" />
+        <button class="btn small" type="submit">Filter</button>
+      </form>
+      ${state.marketplace.length ? state.marketplace.map(m => {
+        const isFav = favs.has(m.id);
+        return `<div class="market-card">
+          ${m.imageUrl ? `<img src="${esc(m.imageUrl)}" alt="${esc(m.title)}" loading="lazy" />` : `<div class="market-placeholder">No image</div>`}
+          <div class="market-body">
+            <div class="market-price">$${esc(m.price)}</div>
+            <div class="market-title">${esc(m.title)}</div>
+            <div class="muted">${esc(m.category||'General')} · ${esc(m.location || 'No location')} · ${esc(userById(m.userId).name)} · ${m.views||0} views</div>
+            <div class="row gap" style="margin-top:8px">
+              <button class="btn small ${isFav?'primary':''}" data-marketplace-fav="${esc(m.id)}">${isFav?'★ Saved':'☆ Save'}</button>
+              <button class="btn small primary" data-marketplace-contact="${esc(m.id)}">Contact Seller</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('') : '<div class="muted">No listings yet.</div>'}`;
   }
 
   function savedCollections() { return JSON.parse(localStorage.getItem('fb_saved_collections') || '{"collections":{},"assign":{}}'); }
@@ -744,6 +760,14 @@
       await api('/api/admin/import', { method:'POST', body: JSON.stringify({ mode, db: db.db || db }) });
       alert('Import completed (mock). Reloading data.'); await loadFeed(true); renderDiagnostics();
     } catch (e) { alert(e.message || 'Import failed'); }
+  });
+
+  $('#marketplaceFilters')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams(new FormData(e.target));
+    for (const [k,v] of params) if (!v) params.delete(k);
+    const data = await api('/api/marketplace?' + params.toString()).catch(err=>alert(err.message));
+    if (data) { state.marketplace = data; renderMarketplace(); }
   });
 
   $('#marketplaceForm')?.addEventListener('submit', async (e) => {

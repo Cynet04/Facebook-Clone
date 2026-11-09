@@ -540,19 +540,58 @@ app.post('/api/stories', writeLimit, (req, res) => {
 // Marketplace (Phase 14)
 app.get('/api/marketplace', (req, res) => {
   const db = readDB();
-  res.json([...(db.marketplace || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)));
+  let listings = [...(db.marketplace || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const { category, minPrice, maxPrice, location, search } = req.query;
+  if (category) listings = listings.filter(l => (l.category||'General') === category);
+  if (minPrice) listings = listings.filter(l => Number(l.price||0) >= Number(minPrice));
+  if (maxPrice) listings = listings.filter(l => Number(l.price||0) <= Number(maxPrice));
+  if (location) listings = listings.filter(l => (l.location||'').toLowerCase().includes(String(location).toLowerCase()));
+  if (search) listings = listings.filter(l => (l.title||'').toLowerCase().includes(String(search).toLowerCase()));
+  res.json(listings);
 });
 app.post('/api/marketplace', writeLimit, (req, res) => {
-  const { userId, title, price, location, imageUrl } = req.body || {};
+  const { userId, title, price, location, imageUrl, category } = req.body || {};
   if (!userId || !title || price === undefined || price === '') return res.status(400).json({ error: 'Missing fields' });
   const img = String(imageUrl || '').trim();
   if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
   const db = readDB();
-  const listing = { id: uid('mk'), userId, title: String(title).slice(0,120), price: String(price).slice(0,40), location: String(location||'').slice(0,80), imageUrl: img.slice(0,500), createdAt: new Date().toISOString() };
-  db.marketplace = db.marketplace || [];
-  db.marketplace.push(listing);
-  writeDB(db);
-  res.status(201).json(listing);
+  const listing = { id: uid('mk'), userId, title: String(title).slice(0,120), price: String(price).slice(0,40), location: String(location||'').slice(0,80), imageUrl: img.slice(0,500), category: String(category||'General').slice(0,60), views: 0, createdAt: new Date().toISOString() };
+  db.marketplace = db.marketplace || []; db.marketplace.push(listing); writeDB(db); res.status(201).json(listing);
+});
+app.post('/api/marketplace/:id/view', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const listing = (db.marketplace || []).find(x => x.id === req.params.id);
+  if (!listing) return res.status(404).json({ error: 'Listing not found' });
+  listing.views = Number(listing.views||0) + 1;
+  db.marketplaceViews = db.marketplaceViews || []; db.marketplaceViews.push({ id: uid('mv'), listingId: listing.id, userId, createdAt: new Date().toISOString() });
+  writeDB(db); res.json(listing);
+});
+app.post('/api/marketplace/:id/favorite', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const listing = (db.marketplace || []).find(x => x.id === req.params.id);
+  if (!listing) return res.status(404).json({ error: 'Listing not found' });
+  db.marketplaceFavorites = db.marketplaceFavorites || [];
+  const existing = db.marketplaceFavorites.find(f => f.listingId === req.params.id && f.userId === userId);
+  if (existing) db.marketplaceFavorites = db.marketplaceFavorites.filter(f => f !== existing);
+  else db.marketplaceFavorites.push({ id: uid('mf'), listingId: req.params.id, userId, createdAt: new Date().toISOString() });
+  writeDB(db); res.json({ favorited: !existing });
+});
+app.post('/api/marketplace/:id/contact', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const listing = (db.marketplace || []).find(x => x.id === req.params.id);
+  if (!listing) return res.status(404).json({ error: 'Listing not found' });
+  // Mock: create a conversation/message
+  const otherId = listing.userId;
+  let conv = (db.conversations || []).find(c => c.participants?.includes(userId) && c.participants?.includes(otherId));
+  if (!conv) { conv = { id: uid('cv'), participants: [userId, otherId], createdAt: new Date().toISOString() }; db.conversations = db.conversations || []; db.conversations.push(conv); }
+  db.messages = db.messages || []; db.messages.push({ id: uid('msg'), conversationId: conv.id, senderId: userId, content: `Interested in your listing: ${listing.title} (mock contact)`, createdAt: new Date().toISOString() });
+  writeDB(db); res.json({ conversationId: conv.id });
 });
 
 function sanitizeDB(input) {
