@@ -686,6 +686,43 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Dating stub (Phase 55) ----------
+app.get('/api/dating', (req, res) => { const db = readDB(); res.json((db.datingProfiles || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/dating', writeLimit, (req, res) => {
+  const { userId, bio, interests } = req.body || {};
+  if (!userId || !String(bio||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const p = { id: uid('dp'), userId, bio: String(bio).slice(0,500), interests: Array.isArray(interests) ? interests.map(String).slice(0,20) : [String(interests||'').slice(0,100)], photos: [], likes: [], passes: [], matches: [], createdAt: new Date().toISOString() };
+  db.datingProfiles = db.datingProfiles || []; db.datingProfiles.push(p); writeDB(db); res.status(201).json(p);
+});
+app.post('/api/dating/:id/like', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const profile = (db.datingProfiles || []).find(x => x.id === req.params.id);
+  if (!profile) return res.status(404).json({ error: 'Profile not found' });
+  if (profile.userId === userId) return res.status(400).json({ error: 'Cannot like own profile' });
+  profile.likes = profile.likes || []; if (!profile.likes.includes(userId)) profile.likes.push(userId);
+  const otherProfile = (db.datingProfiles || []).find(x => x.userId === userId);
+  if (otherProfile && otherProfile.likes && otherProfile.likes.includes(profile.userId)) {
+    profile.matches = profile.matches || []; if (!profile.matches.includes(userId)) profile.matches.push(userId);
+    otherProfile.matches = otherProfile.matches || []; if (!otherProfile.matches.includes(profile.userId)) otherProfile.matches.push(profile.userId);
+    db.notifications = db.notifications || [];
+    db.notifications.push({ id: uid('n'), userId: profile.userId, type: 'dating_match', actorId: userId, message: 'You have a new match! (mock)', read: false, createdAt: new Date().toISOString() });
+    db.notifications.push({ id: uid('n'), userId, type: 'dating_match', actorId: profile.userId, message: 'You have a new match! (mock)', read: false, createdAt: new Date().toISOString() });
+  }
+  writeDB(db); res.json(profile);
+});
+app.post('/api/dating/:id/pass', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const profile = (db.datingProfiles || []).find(x => x.id === req.params.id);
+  if (!profile) return res.status(404).json({ error: 'Profile not found' });
+  profile.passes = profile.passes || []; if (!profile.passes.includes(userId)) profile.passes.push(userId);
+  writeDB(db); res.json(profile);
+});
+
 // ---------- Weather stub (Phase 54) ----------
 app.get('/api/weather', (req, res) => { const db = readDB(); res.json((db.weatherAlerts || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/weather', writeLimit, (req, res) => {

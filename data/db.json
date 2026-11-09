@@ -157,5 +157,21 @@
       "expiresAt": "2026-11-09T12:52:09.757Z",
       "createdAt": "2026-11-09T11:52:09.767Z"
     }
+  ],
+  "datingProfiles": [
+    {
+      "id": "dp1",
+      "userId": "u1",
+      "bio": "Mock dating profile",
+      "interests": [
+        "coding",
+        "gaming"
+      ],
+      "photos": [],
+      "likes": [],
+      "passes": [],
+      "matches": [],
+      "createdAt": "2026-11-09T11:55:21.840Z"
+    }
   ]
 }
