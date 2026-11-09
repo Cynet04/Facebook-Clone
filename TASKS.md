@@ -350,9 +350,16 @@
 - [x] Track job interactions via analytics
 - [x] Verify and commit
 
-## Phase 52+: Infinite
-- [ ] Ad center stub
+## Phase 52: Ad Center Stub
+- [x] Add `/api/ads` mock endpoints and `ads` seed data
+- [x] Add Ad Center nav/view with create/manage mock actions
+- [x] Render ad cards (campaign/targeting/budget/performance)
+- [x] Track ad interactions via analytics
+- [x] Verify and commit
+
+## Phase 53+: Infinite
 - [ ] Climate/Science Center stub
 - [ ] Weather stub
 - [ ] Dating stub
+- [ ] Marketplace enhancements
 - [ ] ...continue indefinitely

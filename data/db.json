@@ -116,5 +116,19 @@
       "savedBy": [],
       "createdAt": "2026-11-09T11:41:58.555Z"
     }
+  ],
+  "ads": [
+    {
+      "id": "ad1",
+      "name": "Mock Ad Campaign",
+      "advertiserUserId": "u1",
+      "targeting": "{age:18-35,location:US}",
+      "budget": 1000,
+      "spent": 120,
+      "impressions": 5000,
+      "clicks": 250,
+      "status": "active",
+      "createdAt": "2026-11-09T11:45:40.023Z"
+    }
   ]
 }

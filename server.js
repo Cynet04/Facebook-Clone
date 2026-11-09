@@ -686,6 +686,27 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Ad Center stub (Phase 52) ----------
+app.get('/api/ads', (req, res) => { const db = readDB(); res.json((db.ads || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/ads', writeLimit, (req, res) => {
+  const { userId, name, targeting, budget } = req.body || {};
+  if (!userId || !String(name||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const b = Math.max(1, Math.min(1000000, Number(budget)||100));
+  const db = readDB();
+  const ad = { id: uid('ad'), name: String(name).slice(0,120), targeting: String(targeting||'').slice(0,200), budget: b, spent: 0, impressions: 0, clicks: 0, status: 'active', advertiserUserId: userId, createdAt: new Date().toISOString() };
+  db.ads = db.ads || []; db.ads.push(ad); writeDB(db); res.status(201).json(ad);
+});
+app.post('/api/ads/:id/pause', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const ad = (db.ads || []).find(x => x.id === req.params.id);
+  if (!ad) return res.status(404).json({ error: 'Ad not found' });
+  if (ad.advertiserUserId !== userId) return res.status(403).json({ error: 'Not allowed' });
+  ad.status = ad.status === 'paused' ? 'active' : 'paused';
+  writeDB(db); res.json(ad);
+});
+
 // ---------- Jobs stub (Phase 51) ----------
 app.get('/api/jobs', (req, res) => { const db = readDB(); res.json((db.jobs || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/jobs', writeLimit, (req, res) => {
