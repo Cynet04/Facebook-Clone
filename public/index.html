@@ -85,10 +85,13 @@
                 <h3>Stories</h3>
                 <form id="storyForm" class="row gap story-form">
                   <input name="text" placeholder="Create a text story..." maxlength="180" />
+                  <input name="scheduledFor" type="datetime-local" title="Schedule story (optional)" aria-label="Schedule story" />
+                  <button class="btn small" type="button" id="scheduleStoryBtn">Schedule</button>
                   <button class="btn small primary" type="submit">Share</button>
                 </form>
               </div>
               <div id="storiesRail" class="stories-rail"></div>
+              <div id="scheduledStories" class="muted" style="margin-top:8px"></div>
             </div>
             <div class="card composer" id="composerCard">
               <div class="row">

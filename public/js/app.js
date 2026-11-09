@@ -11,6 +11,7 @@
     postsTotal: 0,
     postsLoading: false,
     stories: [],
+    scheduledStories: [],
     marketplace: [],
     scheduledPosts: [],
     reports: [],
@@ -77,13 +78,20 @@
   $('#themeBtn')?.addEventListener('click', toggleTheme);
   $('#themeMenuBtn')?.addEventListener('click', () => { toggleTheme(); $('#accountMenu').classList.add('hidden'); });
 
-  $('#storyForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const text = new FormData(e.target).get('text');
-    if (!String(text||'').trim()) return;
-    await api('/api/stories', { method:'POST', body: JSON.stringify({ userId: state.user.id, text, bg: 'linear-gradient(135deg,#1877f2,#42b72a)' }) }).catch(err=>alert(err.message));
-    e.target.reset(); await loadAux(); renderStories();
-  });
+  async function submitStory(scheduled=false) {
+    const form = $('#storyForm'); if (!form) return;
+    const fd = new FormData(form);
+    const text = String(fd.get('text')||'').trim();
+    const scheduledFor = String(fd.get('scheduledFor')||'').trim();
+    if (!text) return;
+    const payload = { userId: state.user.id, text, bg: 'linear-gradient(135deg,#1877f2,#42b72a)' };
+    if (scheduled) { if (!scheduledFor) { alert('Pick a schedule time'); return; } payload.scheduledFor = new Date(scheduledFor).toISOString(); }
+    await api('/api/stories', { method:'POST', body: JSON.stringify(payload) }).catch(err=>alert(err.message));
+    trackEvent(scheduled ? 'story_schedule' : 'story_create');
+    form.reset(); await loadAux(); renderStories();
+  }
+  $('#storyForm')?.addEventListener('submit', async (e) => { e.preventDefault(); await submitStory(false); });
+  $('#scheduleStoryBtn')?.addEventListener('click', async () => submitStory(true));
 
   renderAuth();
   applyTheme();
@@ -247,6 +255,8 @@
       const u = userById(s.userId);
       return `<div class="story" style="background:${esc(s.bg || 'linear-gradient(135deg,#1877f2,#42b72a)')}"><div class="story-user">${esc(u.name)}</div><div class="story-text">${esc(s.text)}</div></div>`;
     }).join('') : '<div class="muted">No stories in the last 24 hours.</div>';
+    const sched = $('#scheduledStories');
+    if (sched) sched.innerHTML = state.scheduledStories?.length ? `<strong>Scheduled:</strong> ${state.scheduledStories.map(s=>`${esc(s.text.slice(0,24))} (${esc(new Date(s.scheduledFor).toLocaleString())})`).join(' · ')}` : '';
   }
 
   function renderScheduled() {
@@ -452,7 +462,11 @@
     try { state.notifications = await api(`/api/notifications?userId=${encodeURIComponent(state.user.id)}`); } catch { state.notifications = []; }
     try { state.groups = await api('/api/groups'); } catch { state.groups = []; }
     try { state.messages = await api(`/api/messages?userId=${encodeURIComponent(state.user.id)}`); } catch { state.messages = []; }
-    try { state.stories = await api('/api/stories'); } catch { state.stories = []; }
+    try {
+      const allStories = await api(`/api/stories?includeScheduled=1&userId=${encodeURIComponent(state.user.id)}`);
+      state.stories = (allStories || []).filter(s => (s.status || 'published') === 'published');
+      state.scheduledStories = (allStories || []).filter(s => s.status === 'scheduled' && s.userId === state.user.id);
+    } catch { state.stories = []; state.scheduledStories = []; }
     try { state.marketplace = await api('/api/marketplace'); } catch { state.marketplace = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     renderNotifications();

@@ -123,6 +123,14 @@ function publishDueScheduled(db) {
       changed = true;
     }
   });
+  (db.stories || []).forEach(s => {
+    if (s.status === 'scheduled' && s.scheduledFor && new Date(s.scheduledFor).getTime() <= now) {
+      s.status = 'published';
+      s.createdAt = new Date().toISOString();
+      delete s.scheduledFor;
+      changed = true;
+    }
+  });
   return changed;
 }
 
@@ -449,19 +457,31 @@ app.post('/api/messages', (req, res) => {
   res.status(201).json(msg);
 });
 
-// Stories (Phase 11)
+// Stories (Phase 11/34)
 app.get('/api/stories', (req, res) => {
   const db = readDB();
   const now = Date.now();
-  const stories = (db.stories || []).filter(s => now - new Date(s.createdAt).getTime() < 24 * 60 * 60 * 1000)
-    .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const includeScheduled = req.query.includeScheduled === '1';
+  const userId = req.query.userId;
+  const changed = publishDueScheduled(db);
+  if (changed) writeDB(db);
+  const stories = (db.stories || []).filter(s => {
+    if ((s.status || 'published') === 'scheduled') return includeScheduled && userId && s.userId === userId;
+    return now - new Date(s.createdAt).getTime() < 24 * 60 * 60 * 1000;
+  }).sort((a,b)=>new Date(b.createdAt || b.scheduledFor)-new Date(a.createdAt || a.scheduledFor));
   res.json(stories);
 });
 app.post('/api/stories', (req, res) => {
-  const { userId, text, bg } = req.body || {};
+  const { userId, text, bg, scheduledFor } = req.body || {};
   if (!userId || !text) return res.status(400).json({ error: 'Missing fields' });
+  let sched = null;
+  if (scheduledFor) {
+    const t = new Date(scheduledFor).getTime();
+    if (!Number.isFinite(t) || t <= Date.now() + 30 * 1000) return res.status(400).json({ error: 'scheduledFor must be > 30s in future' });
+    sched = new Date(t).toISOString();
+  }
   const db = readDB();
-  const story = { id: uid('s'), userId, text: String(text).slice(0, 180), bg: String(bg || '#1877f2').slice(0, 120), createdAt: new Date().toISOString() };
+  const story = { id: uid('s'), userId, text: String(text).slice(0, 180), bg: String(bg || '#1877f2').slice(0, 120), status: sched ? 'scheduled' : 'published', createdAt: sched ? null : new Date().toISOString(), ...(sched ? { scheduledFor: sched } : {}) };
   db.stories = db.stories || [];
   db.stories.push(story);
   writeDB(db);

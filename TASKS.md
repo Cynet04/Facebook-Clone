@@ -224,9 +224,16 @@
 - [x] Publish due scheduled posts on load/poll (client-side mock trigger)
 - [x] Verify and commit
 
-## Phase 34+: Infinite
-- [ ] Scheduled stories mock
+## Phase 34: Scheduled Stories Mock
+- [x] Add scheduled story fields/API (`scheduledFor`, status) with mock scheduler check
+- [x] Add schedule option in story UI (datetime-local)
+- [x] Show scheduled stories in owner-only section
+- [x] Publish due scheduled stories on load/poll
+- [x] Verify and commit
+
+## Phase 35+: Infinite
 - [ ] Rate limiting/security hardening mock
 - [ ] Post pinning/highlights
 - [ ] Profile/about details expansion
+- [ ] Friend suggestions algorithm mock
 - [ ] ...continue indefinitely
