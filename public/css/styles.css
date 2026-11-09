@@ -105,6 +105,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
 .post-actions { display: flex; gap: 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 6px 0; align-items: center; }
 .post-actions > button, .post-actions .react-main { flex: 1; background: transparent; border: none; padding: 8px; border-radius: 6px; cursor: pointer; color: var(--muted); font-weight: 600; }
 .post-actions > button:hover, .post-actions .react-main:hover { background: var(--input); }
+.post-actions button.saved { color: var(--blue); }
 .react-wrap { position: relative; flex: 1; }
 .react-picker { display: none; position: absolute; left: 0; bottom: calc(100% + 4px); background: var(--card); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); padding: 4px 6px; gap: 2px; z-index: 5; }
 .react-wrap:hover .react-picker, .react-wrap:focus-within .react-picker { display: flex; }

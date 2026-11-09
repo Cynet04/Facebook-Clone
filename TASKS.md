@@ -91,9 +91,16 @@
 - [x] Render listings grid/cards
 - [x] Verify and commit
 
-## Phase 15+: Infinite
+## Phase 15: Bookmarks / Saved Posts
+- [x] Add saved posts data model/API per user
+- [x] Add save/unsave action on posts
+- [x] Add Saved view to list bookmarked posts
+- [x] Persist saved state and render indicators
+- [x] Verify and commit
+
+## Phase 16+: Infinite
 - [ ] Privacy/settings mock
-- [ ] Bookmarks/saved posts
 - [ ] Pagination/infinite scroll mock
 - [ ] Admin/moderation stubs
+- [ ] PWA/offline stub
 - [ ] ...continue indefinitely

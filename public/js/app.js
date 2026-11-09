@@ -89,7 +89,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','saved'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -97,6 +97,7 @@
     if (state.view === 'groups') renderGroups();
     if (state.view === 'messenger') renderMessengerPage();
     if (state.view === 'marketplace') renderMarketplace();
+    if (state.view === 'saved') renderSaved();
     if (state.view === 'search') renderSearch();
   }
 
@@ -117,6 +118,7 @@
     const u = userById(p.userId);
     const myReaction = p.reactions?.[state.user?.id] || ((p.likes || []).includes(state.user?.id) ? 'like' : null);
     const comments = (state.commentsByPost?.[p.id] || []);
+    const saved = (userById(state.user?.id).savedPosts || []).includes(p.id);
     const [icon,label,cls] = reactionMeta(myReaction || 'like');
     return `
       <article class="card post" data-post-id="${esc(p.id)}">
@@ -138,6 +140,7 @@
             </div>
           </div>
           <button data-focus-comment="${esc(p.id)}">💬 Comment</button>
+          <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?'🔖 Saved':'🔖 Save'}</button>
         </div>
         <div class="comments">
           ${comments.map(c => `<div class="comment"><strong>${esc(userById(c.userId).name)}</strong>${esc(c.content)}</div>`).join('')}
@@ -303,6 +306,14 @@
       </div>`).join('') : '<div class="muted">No listings yet.</div>';
   }
 
+  function renderSaved() {
+    const el = $('#savedPosts');
+    if (!el) return;
+    const ids = userById(state.user.id).savedPosts || [];
+    const posts = ids.map(id => state.posts.find(p => p.id === id)).filter(Boolean);
+    el.innerHTML = posts.length ? posts.map(p => postCard(p)).join('') : '<div class="muted">No saved posts yet. Use Save on any post.</div>';
+  }
+
   function renderSearch() {
     const q = state.searchQuery.toLowerCase().trim();
     const meta = $('#searchMeta');
@@ -414,6 +425,11 @@
     }
     const likeBtn = e.target.closest('[data-like]');
     if (likeBtn && state.user) { await api(`/api/posts/${likeBtn.dataset.like}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(()=>{}); await loadFeed(); return; }
+    const saveBtn = e.target.closest('[data-save-post]');
+    if (saveBtn && state.user) {
+      await api(`/api/users/${state.user.id}/save`, { method:'POST', body: JSON.stringify({ postId: saveBtn.dataset.savePost }) }).catch(err=>alert(err.message));
+      await loadFeed(); return;
+    }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
     const profileLink = e.target.closest('[data-open-profile]');

@@ -65,6 +65,7 @@ app.get('/api/users/:id', (req, res) => {
   const user = db.users.find(u => u.id === req.params.id);
   if (!user) return res.status(404).json({ error: 'Not found' });
   const { password, ...safe } = user;
+  safe.savedPosts = safe.savedPosts || [];
   res.json(safe);
 });
 app.patch('/api/users/:id', (req, res) => {
@@ -78,7 +79,20 @@ app.patch('/api/users/:id', (req, res) => {
   if (bio !== undefined) user.bio = String(bio).slice(0, 280);
   writeDB(db);
   const { password, ...safe } = user;
+  safe.savedPosts = safe.savedPosts || [];
   res.json(safe);
+});
+app.post('/api/users/:id/save', (req, res) => {
+  const { postId } = req.body || {};
+  if (!postId) return res.status(400).json({ error: 'Missing postId' });
+  const db = readDB();
+  const user = db.users.find(u => u.id === req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  user.savedPosts = user.savedPosts || [];
+  const idx = user.savedPosts.indexOf(postId);
+  if (idx >= 0) user.savedPosts.splice(idx, 1); else user.savedPosts.unshift(postId);
+  writeDB(db);
+  res.json({ savedPosts: user.savedPosts });
 });
 
 // Posts
