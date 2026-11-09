@@ -377,17 +377,6 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
-  function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
-  function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
-  function renderSettings() {
-    const f = $('#settingsForm'); if (!f) return;
-    f.audience.value = state.settings.audience || 'public';
-    f.showEmail.checked = !!state.settings.showEmail;
-    f.allowRequests.checked = state.settings.allowRequests !== false;
-    f.storySharing.checked = state.settings.storySharing !== false;
-    $('#sessionInfo').innerHTML = state.user ? `<div><strong>${esc(state.user.name)}</strong></div><div class="muted">${esc(state.user.email)}</div><div class="muted">Theme: ${esc(state.theme)}</div><div class="muted">Audience label: ${esc(audienceLabel(state.settings.audience))}</div>` : '<div class="muted">Not signed in.</div>';
-  }
-
   function renderMarketplace() {
     const el = $('#marketplaceList');
     if (!el) return;

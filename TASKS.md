@@ -189,9 +189,16 @@
 - [x] Keep fallback/default English behavior
 - [x] Verify and commit
 
-## Phase 29+: Infinite
-- [ ] E2E test scaffold
+## Phase 29: E2E Test Scaffold (Mock)
+- [ ] Add minimal E2E test runner script (Playwright/Puppeteer-free lightweight HTTP+DOM checks or Node fetch smoke)
+- [ ] Add API smoke tests for key endpoints (auth/posts/comments/groups/marketplace/reports)
+- [ ] Add frontend shell smoke checks (index contains key UI anchors)
+- [ ] Wire `npm run test:e2e` script
+- [ ] Verify and commit
+
+## Phase 30+: Infinite
 - [ ] Data export/import mock
 - [ ] Developer/admin diagnostics panel
 - [ ] Analytics/events stub
+- [ ] Scheduled posts/stories mock
 - [ ] ...continue indefinitely
