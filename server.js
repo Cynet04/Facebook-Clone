@@ -667,6 +667,25 @@ app.post('/api/fundraisers/:id/donate', writeLimit, (req, res) => {
   writeDB(db); res.json(fr);
 });
 
+// ---------- Pages stub (Phase 47) ----------
+app.get('/api/pages', (req, res) => { const db = readDB(); res.json((db.pages || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/pages', writeLimit, (req, res) => {
+  const { userId, name, category, description } = req.body || {};
+  if (!userId || !String(name||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const pg = { id: uid('pg'), name: String(name).slice(0,120), category: String(category||'General').slice(0,60), description: String(description||'').slice(0,500), ownerUserId: userId, likes: [], createdAt: new Date().toISOString() };
+  db.pages = db.pages || []; db.pages.push(pg); writeDB(db); res.status(201).json(pg);
+});
+app.post('/api/pages/:id/like', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const pg = (db.pages || []).find(x => x.id === req.params.id);
+  if (!pg) return res.status(404).json({ error: 'Page not found' });
+  pg.likes = pg.likes || []; const i = pg.likes.indexOf(userId); if (i >= 0) pg.likes.splice(i,1); else pg.likes.push(userId);
+  writeDB(db); res.json(pg);
+});
+
 // Analytics/events stub (Phase 32)
 app.post('/api/analytics/events', writeLimit, (req, res) => {
   const { type, userId, meta } = req.body || {};

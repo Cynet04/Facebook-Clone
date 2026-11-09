@@ -15,6 +15,7 @@
       videos: [],
       eventItems: [],
       fundraisers: [],
+      pages: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -131,7 +132,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -143,6 +144,7 @@
     if (state.view === 'events') renderEvents();
     if (state.view === 'birthdays') renderBirthdays();
     if (state.view === 'fundraisers') renderFundraisers();
+    if (state.view === 'pages') renderPages();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -437,6 +439,18 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
+  function renderPages() {
+    $('#pagesView').innerHTML = `
+      <div class="card"><h2>Pages</h2><p class="muted">Mock pages (create + like/follow stub).</p>
+        <form id="pageForm" class="stack">
+          <input name="name" placeholder="Page name" required maxlength="120" />
+          <input name="category" placeholder="Category (e.g. Community)" maxlength="60" />
+          <textarea name="description" placeholder="Description" maxlength="500"></textarea>
+          <div><button class="btn primary small" type="submit">Create page</button></div>
+        </form>
+      </div>
+      ${(state.pages||[]).map(pg => { const liked=(pg.likes||[]).includes(state.user?.id); return `<div class="card"><div class="row" style="justify-content:space-between"><div><h3>${esc(pg.name)}</h3><div class="muted">${esc(pg.category||'General')} · ${esc(userById(pg.ownerUserId).name)}</div></div><button class="btn small ${liked?'':'primary'}" data-page-like="${esc(pg.id)}">${liked?'Liked':'Like'}</button></div><div>${esc(pg.description||'')}</div><div class="muted" style="margin-top:6px">${(pg.likes||[]).length} likes</div></div>`; }).join('') || '<div class="card muted">No pages yet.</div>'}`;
+  }
   function renderFundraisers() {
     $('#fundraisersView').innerHTML = `
       <div class="card"><h2>Fundraisers</h2><p class="muted">Mock fundraisers (no real payments).</p>
@@ -544,6 +558,7 @@
     try { state.videos = await api('/api/videos'); } catch { state.videos = []; }
     try { state.eventItems = await api('/api/events'); } catch { state.eventItems = []; }
     try { state.fundraisers = await api('/api/fundraisers'); } catch { state.fundraisers = []; }
+    try { state.pages = await api('/api/pages'); } catch { state.pages = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
@@ -733,6 +748,11 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-page-like]') && state.user) {
+      const id = e.target.closest('[data-page-like]').dataset.pageLike;
+      await api(`/api/pages/${id}/like`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('page_like'); await loadAux(); renderPages(); return;
+    }
     if (e.target.closest('[data-fundraiser-donate]') && state.user) {
       const b = e.target.closest('[data-fundraiser-donate]');
       await api(`/api/fundraisers/${b.dataset.fundraiserDonate}/donate`, { method:'POST', body: JSON.stringify({ userId: state.user.id, amount: Number(b.dataset.amount||5) }) }).catch(err=>alert(err.message));
