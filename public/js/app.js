@@ -17,6 +17,7 @@
       fundraisers: [],
       pages: [],
       reels: [],
+      games: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -133,7 +134,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','gaming','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -147,6 +148,7 @@
     if (state.view === 'fundraisers') renderFundraisers();
     if (state.view === 'pages') renderPages();
     if (state.view === 'reels') renderReels();
+    if (state.view === 'gaming') renderGaming();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -444,6 +446,9 @@
   function renderReels() {
     $('#reelsView').innerHTML = `<div class="card"><h2>Reels</h2><p class="muted">Short video stubs (mock).</p></div>${(state.reels||[]).map(r=>`<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-reel-like="${esc(r.id)}">👍 ${(r.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No reels yet.</div>'}`;
   }
+  function renderGaming() {
+    $('#gamingView').innerHTML = `<div class="card"><h2>Gaming</h2><p class="muted">Instant games stub (mock).</p></div>${(state.games||[]).map(g=>`<div class="card game-card"><div class="muted">${esc(userById(g.creatorUserId).name)}</div><div><strong>${esc(g.title||'Game')}</strong></div><div class="muted">${esc(g.plays||0)} plays · ${esc((g.likes||[]).length)} likes</div><iframe src="${esc(g.url||'about:blank')}" style="width:100%;height:320px;border:none;border-radius:8px;background:#000"></iframe><div class="row gap" style="margin-top:8px"><button class="btn small" data-game-like="${esc(g.id)}">👍 ${(g.likes||[]).length}</button><button class="btn small primary" data-game-play="${esc(g.id)}">Play</button></div></div>`).join('') || '<div class="card muted">No games yet.</div>'}`;
+  }
   function renderPages() {
     $('#pagesView').innerHTML = `
       <div class="card"><h2>Pages</h2><p class="muted">Mock pages (create + like/follow stub).</p>
@@ -582,6 +587,8 @@
     try { state.fundraisers = await api('/api/fundraisers'); } catch { state.fundraisers = []; }
     try { state.pages = await api('/api/pages'); } catch { state.pages = []; }
     try { state.reels = await api('/api/reels'); } catch { state.reels = []; }
+    try { state.games = await api('/api/games'); } catch { state.games = []; }
+    try { state.games = await api('/api/games'); } catch { state.games = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
     renderNotifications();
@@ -771,6 +778,16 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-game-like]') && state.user) {
+      const id = e.target.closest('[data-game-like]').dataset.gameLike;
+      await api(`/api/games/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('game_like'); await loadAux(); renderGaming(); return;
+    }
+    if (e.target.closest('[data-game-play]') && state.user) {
+      const id = e.target.closest('[data-game-play]').dataset.gamePlay;
+      await api(`/api/games/${id}/play`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('game_play'); await loadAux(); renderGaming(); return;
+    }
     if (e.target.closest('[data-reel-like]') && state.user) {
       const id = e.target.closest('[data-reel-like]').dataset.reelLike;
       await api(`/api/reels/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));

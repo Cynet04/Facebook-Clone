@@ -686,6 +686,27 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Gaming stub (Phase 50) ----------
+app.get('/api/games', (req, res) => { const db = readDB(); res.json((db.games || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/games/:id/react', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const g = (db.games || []).find(x => x.id === req.params.id);
+  if (!g) return res.status(404).json({ error: 'Game not found' });
+  g.likes = g.likes || []; const i = g.likes.indexOf(userId); if (i >= 0) g.likes.splice(i,1); else g.likes.push(userId);
+  writeDB(db); res.json(g);
+});
+app.post('/api/games/:id/play', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const g = (db.games || []).find(x => x.id === req.params.id);
+  if (!g) return res.status(404).json({ error: 'Game not found' });
+  g.plays = Number(g.plays||0) + 1;
+  writeDB(db); res.json(g);
+});
+
 // ---------- Reels stub (Phase 49) ----------
 app.get('/api/reels', (req, res) => { const db = readDB(); res.json((db.reels || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/reels/:id/react', writeLimit, (req, res) => {
