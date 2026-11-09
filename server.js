@@ -694,13 +694,51 @@ app.post('/api/reports/:id/resolve', (req, res) => {
 });
 
 // ---------- Events stub (Phase 44; eventItems avoids analytics db.events) ----------
-app.get('/api/events', (req, res) => { const db = readDB(); res.json((db.eventItems || []).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0))); });
+app.get('/api/events', (req, res) => {
+  const db = readDB();
+  let events = (db.eventItems || []).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
+  const { category, search, upcoming } = req.query;
+  if (category) events = events.filter(e => (e.category||'General') === category);
+  if (search) events = events.filter(e => (e.title||'').toLowerCase().includes(String(search).toLowerCase()));
+  if (upcoming === 'true') events = events.filter(e => new Date(e.date) > new Date());
+  res.json(events);
+});
 app.post('/api/events', writeLimit, (req, res) => {
-  const { userId, title, date, location, description } = req.body || {};
+  const { userId, title, date, location, description, category, isRecurring, recurrenceRule, endDate, maxAttendees } = req.body || {};
   if (!userId || !String(title||'').trim() || !date) return res.status(400).json({ error: 'Missing fields' });
   const db = readDB();
-  const ev = { id: uid('se'), title: String(title).slice(0,120), date: new Date(date).toISOString(), location: String(location||'').slice(0,120), description: String(description||'').slice(0,500), hostUserId: userId, rsvps: [], createdAt: new Date().toISOString() };
+  const ev = { id: uid('se'), title: String(title).slice(0,120), date: new Date(date).toISOString(), location: String(location||'').slice(0,120), description: String(description||'').slice(0,500), category: String(category||'General').slice(0,60), hostUserId: userId, rsvps: [], waitlist: [], isRecurring: Boolean(isRecurring), recurrenceRule: String(recurrenceRule||'').slice(0,100), endDate: endDate ? new Date(endDate).toISOString() : null, maxAttendees: Number(maxAttendees||0) || null, views: 0, createdAt: new Date().toISOString() };
   db.eventItems = db.eventItems || []; db.eventItems.push(ev); writeDB(db); res.status(201).json(ev);
+});
+app.patch('/api/events/:id', writeLimit, (req, res) => {
+  const { userId, ...updates } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const ev = (db.eventItems || []).find(x => x.id === req.params.id);
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  if (ev.hostUserId !== userId) return res.status(403).json({ error: 'Only host can edit event' });
+  Object.keys(updates).forEach(k => { if (updates[k] !== undefined && k !== 'id' && k !== 'hostUserId' && k !== 'createdAt') ev[k] = updates[k]; });
+  writeDB(db); res.json(ev);
+});
+app.delete('/api/events/:id', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const idx = (db.eventItems || []).findIndex(x => x.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Event not found' });
+  const ev = db.eventItems[idx];
+  if (ev.hostUserId !== userId) return res.status(403).json({ error: 'Only host can delete event' });
+  db.eventItems.splice(idx, 1); writeDB(db); res.json({ ok: true });
+});
+app.post('/api/events/:id/duplicate', writeLimit, (req, res) => {
+  const { userId, newDate } = req.body || {};
+  if (!userId || !newDate) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const ev = (db.eventItems || []).find(x => x.id === req.params.id);
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  if (ev.hostUserId !== userId) return res.status(403).json({ error: 'Only host can duplicate event' });
+  const newEv = { ...ev, id: uid('se'), date: new Date(newDate).toISOString(), rsvps: [], waitlist: [], views: 0, createdAt: new Date().toISOString() };
+  db.eventItems = db.eventItems || []; db.eventItems.push(newEv); writeDB(db); res.status(201).json(newEv);
 });
 app.post('/api/events/:id/rsvp', writeLimit, (req, res) => {
   const { userId } = req.body || {};
@@ -708,8 +746,37 @@ app.post('/api/events/:id/rsvp', writeLimit, (req, res) => {
   const db = readDB();
   const ev = (db.eventItems || []).find(x => x.id === req.params.id);
   if (!ev) return res.status(404).json({ error: 'Event not found' });
-  ev.rsvps = ev.rsvps || []; const i = ev.rsvps.indexOf(userId); if (i >= 0) ev.rsvps.splice(i,1); else ev.rsvps.push(userId);
+  ev.rsvps = ev.rsvps || [];
+  const max = ev.maxAttendees || Infinity;
+  const i = ev.rsvps.indexOf(userId);
+  if (i >= 0) {
+    ev.rsvps.splice(i, 1);
+  } else if (ev.rsvps.length < max) {
+    ev.rsvps.push(userId);
+  } else {
+    ev.waitlist = ev.waitlist || [];
+    if (!ev.waitlist.includes(userId)) ev.waitlist.push(userId);
+  }
   writeDB(db); res.json(ev);
+});
+app.post('/api/events/:id/remind', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const ev = (db.eventItems || []).find(x => x.id === req.params.id);
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  ev.reminders = ev.reminders || [];
+  if (!ev.reminders.includes(userId)) ev.reminders.push(userId);
+  writeDB(db); res.json(ev);
+});
+app.get('/api/events/:id/insights', (req, res) => {
+  const db = readDB();
+  const ev = (db.eventItems || []).find(x => x.id === req.params.id);
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  const waitlistCount = (ev.waitlist||[]).length;
+  const views = Number(ev.views||0);
+  const reminderCount = (ev.reminders||[]).length;
+  res.json({ rsvpCount: (ev.rsvps||[]).length, waitlistCount, maxAttendees: ev.maxAttendees || null, views, reminderCount, isFull: max > 0 && (ev.rsvps||[]).length >= max });
 });
 
 // ---------- Fundraisers stub (Phase 46) ----------

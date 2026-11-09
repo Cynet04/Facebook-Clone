@@ -519,17 +519,27 @@
   function renderEvents() {
     const items = (state.eventItems||[]).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     $('#eventsView').innerHTML = `
-      <div class="card"><h2>Events</h2><p class="muted">Mock events and RSVP stub.</p>
+      <div class="card"><h2>Events</h2><p class="muted">Enhanced events with categories, recurring, waitlist, insights.</p>
         <form id="eventForm" class="stack">
           <input name="title" placeholder="Event title" required maxlength="120" />
           <input name="date" type="datetime-local" required />
           <input name="location" placeholder="Location" maxlength="120" />
+          <input name="category" placeholder="Category (e.g. Social, Tech, Sports)" maxlength="60" />
+          <input name="maxAttendees" type="number" min="1" placeholder="Max attendees (optional)" />
+          <label class="row gap"><input name="isRecurring" type="checkbox" /> Recurring event</label>
+          <input name="recurrenceRule" placeholder="Recurrence rule (e.g. FREQ=WEEKLY)" maxlength="100" />
+          <input name="endDate" type="datetime-local" placeholder="Recurrence end date" />
           <textarea name="description" placeholder="Description" maxlength="500"></textarea>
           <div><button class="btn primary small" type="submit">Create event</button></div>
         </form>
       </div>
       <div class="card"><h3>Upcoming events</h3>
-        ${items.length ? items.map(ev => { const going=(ev.rsvps||[]).includes(state.user?.id); return `<div class="list-row" style="align-items:flex-start"><div><strong>${esc(ev.title)}</strong><div class="muted">${esc(new Date(ev.date).toLocaleString())} · ${esc(ev.location||'No location')}</div><div>${esc(ev.description||'')}</div><div class="muted">Host: ${esc(userById(ev.hostUserId).name)} · ${(ev.rsvps||[]).length} going</div></div><button class="btn small ${going?'':'primary'}" data-event-rsvp="${esc(ev.id)}">${going?'Going':'RSVP'}</button></div>`; }).join('') : '<div class="muted">No events yet.</div>'}
+        ${items.length ? items.map(ev => {
+          const going = (ev.rsvps||[]).includes(state.user?.id);
+          const waitlisted = (ev.waitlist||[]).includes(state.user?.id);
+          const isFull = ev.maxAttendees && (ev.rsvps||[]).length >= ev.maxAttendees;
+          return `<div class="list-row" style="align-items:flex-start"><div><strong>${esc(ev.title)}</strong><div class="muted">${esc(new Date(ev.date).toLocaleString())} · ${esc(ev.location||'No location')} · ${esc(ev.category||'General')}</div><div>${esc(ev.description||'')}</div><div class="muted">Host: ${esc(userById(ev.hostUserId).name)} · ${(ev.rsvps||[]).length}${ev.maxAttendees?'/'+ev.maxAttendees:''} going${isFull?' (FULL)':''}${ev.waitlist && ev.waitlist.length>0?' · '+ev.waitlist.length+' waitlisted':''}</div></div><div class="row gap"><button class="btn small ${going?'':'primary'}" data-event-rsvp="${esc(ev.id)}">${going?'Going':'RSVP'}</button><button class="btn small" data-event-remind="${esc(ev.id)}">Remind</button><button class="btn small" data-event-insights="${esc(ev.id)}">Insights</button></div></div>`;
+        }).join('') : '<div class="muted">No events yet.</div>'}
       </div>`;
   }
   function renderWatch() {
@@ -912,6 +922,17 @@
       trackEvent('fundraiser_donate', { amount: Number(b.dataset.amount||5) }); await loadAux(); renderFundraisers(); return;
     }
     if (e.target.closest('[data-birthday-wish]') && state.user) { const id = e.target.closest('[data-birthday-wish]').dataset.birthdayWish; await api('/api/notifications', { method:'POST', body: JSON.stringify({ userId: id, type:'birthday_wish', actorId: state.user.id, message:`${state.user.name} sent you birthday wishes (mock).` }) }).catch(()=>{}); trackEvent('birthday_wish',{targetId:id}); alert('Wish sent (mock).'); return; }
+    if (e.target.closest('[data-event-insights]') && state.user) {
+      const id = e.target.closest('[data-event-insights]').dataset.eventInsights;
+      const data = await api(`/api/events/${id}/insights`).catch(err=>alert(err.message));
+      if (data) alert(`Event Insights: ${data.rsvpCount} going, ${data.waitlistCount} waitlisted, ${data.views} views, ${data.reminderCount} reminders`);
+      return;
+    }
+    if (e.target.closest('[data-event-remind]') && state.user) {
+      const id = e.target.closest('[data-event-remind]').dataset.eventRemind;
+      await api(`/api/events/${id}/remind`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('event_remind'); await loadAux(); renderEvents(); return;
+    }
     if (e.target.closest('[data-event-rsvp]') && state.user) { const id = e.target.closest('[data-event-rsvp]').dataset.eventRsvp; await api(`/api/events/${id}/rsvp`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); trackEvent('event_rsvp'); await loadAux(); renderEvents(); return; }
     if (e.target.closest('[data-memory-open]')) { trackEvent('memory_open'); state.view='home'; renderView(); return; }
     const watchLike = e.target.closest('[data-watch-like]');
