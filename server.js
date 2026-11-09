@@ -686,6 +686,36 @@ app.post('/api/pages/:id/like', writeLimit, (req, res) => {
   writeDB(db); res.json(pg);
 });
 
+// ---------- Climate/Science Center stub (Phase 53) ----------
+app.get('/api/science', (req, res) => { const db = readDB(); res.json((db.sciencePosts || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
+app.post('/api/science', writeLimit, (req, res) => {
+  const { userId, title, content, category, imageUrl } = req.body || {};
+  if (!userId || !String(title||'').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const img = String(imageUrl || '').trim();
+  if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
+  const db = readDB();
+  const p = { id: uid('sc'), title: String(title).slice(0,120), content: String(content||'').slice(0,2000), category: String(category||'General').slice(0,60), imageUrl: img.slice(0,500), authorUserId: userId, likes: [], shares: 0, createdAt: new Date().toISOString() };
+  db.sciencePosts = db.sciencePosts || []; db.sciencePosts.push(p); writeDB(db); res.status(201).json(p);
+});
+app.post('/api/science/:id/react', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const p = (db.sciencePosts || []).find(x => x.id === req.params.id);
+  if (!p) return res.status(404).json({ error: 'Article not found' });
+  p.likes = p.likes || []; const i = p.likes.indexOf(userId); if (i >= 0) p.likes.splice(i,1); else p.likes.push(userId);
+  writeDB(db); res.json(p);
+});
+app.post('/api/science/:id/share', writeLimit, (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  const db = readDB();
+  const p = (db.sciencePosts || []).find(x => x.id === req.params.id);
+  if (!p) return res.status(404).json({ error: 'Article not found' });
+  p.shares = Number(p.shares||0) + 1;
+  writeDB(db); res.json(p);
+});
+
 // ---------- Ad Center stub (Phase 52) ----------
 app.get('/api/ads', (req, res) => { const db = readDB(); res.json((db.ads || []).slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))); });
 app.post('/api/ads', writeLimit, (req, res) => {

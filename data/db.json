@@ -130,5 +130,18 @@
       "status": "active",
       "createdAt": "2026-11-09T11:45:40.023Z"
     }
+  ],
+  "sciencePosts": [
+    {
+      "id": "sc1",
+      "title": "Climate Change Mock Article",
+      "authorUserId": "u1",
+      "content": "Mock science content...",
+      "category": "Climate",
+      "imageUrl": "",
+      "likes": [],
+      "shares": 0,
+      "createdAt": "2026-11-09T11:48:57.447Z"
+    }
   ]
 }

@@ -20,6 +20,7 @@
       games: [],
       jobs: [],
       ads: [],
+      sciencePosts: [],
     scheduledPosts: [],
     reports: [],
     suggestions: [],
@@ -136,7 +137,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','gaming','jobs','ads','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','fundraisers','pages','reels','gaming','jobs','ads','science','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -153,6 +154,7 @@
     if (state.view === 'gaming') renderGaming();
     if (state.view === 'jobs') renderJobs();
     if (state.view === 'ads') renderAds();
+    if (state.view === 'science') renderScience();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -467,6 +469,9 @@
     </div>
     ${(state.ads||[]).map(a=>`<div class="card ad-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(a.name||'Campaign')}</h3><div class="muted">${esc(a.targeting||'No targeting')} · Budget: $${esc(a.budget||0)} · Status: <span class="${a.status==='active'?'success':'muted'}">${esc(a.status)}</span></div><button class="btn small" data-ad-pause="${esc(a.id)}">${a.status==='active'?'Pause':'Resume'}</button></div><div class="muted" style="margin-top:6px">Impressions: ${esc(a.impressions||0)} · Clicks: ${esc(a.clicks||0)} · Spent: $${esc(a.spent||0)}</div></div>`).join('') || '<div class="card muted">No campaigns yet.</div>'}`;
   }
+  function renderScience() {
+    $('#scienceView').innerHTML = `<div class="card"><h2>Science Center</h2><p class="muted">Climate & Science articles (mock).</p></div>${(state.sciencePosts||[]).map(p=>`<div class="card science-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(p.title||'Article')}</h3><div class="muted">${esc(p.category||'General')} · By ${esc(userById(p.authorUserId).name)}</div><button class="btn small" data-science-like="${esc(p.id)}">👍 ${(p.likes||[]).length}</button></div><div>${esc(p.content||'').slice(0,200)}...</div><div class="row gap" style="margin-top:8px"><button class="btn small" data-science-share="${esc(p.id)}">Share (${p.shares||0})</button></div></div>`).join('') || '<div class="card muted">No articles yet.</div>'}`;
+  }
   function renderPages() {
     $('#pagesView').innerHTML = `
       <div class="card"><h2>Pages</h2><p class="muted">Mock pages (create + like/follow stub).</p>
@@ -608,6 +613,7 @@
     try { state.games = await api('/api/games'); } catch { state.games = []; }
     try { state.jobs = await api('/api/jobs'); } catch { state.jobs = []; }
     try { state.ads = await api('/api/ads'); } catch { state.ads = []; }
+    try { state.sciencePosts = await api('/api/science'); } catch { state.sciencePosts = []; }
     try { state.games = await api('/api/games'); } catch { state.games = []; }
     try { state.reports = await api('/api/reports'); } catch { state.reports = []; }
     try { state.suggestions = await api(`/api/users/${encodeURIComponent(state.user.id)}/suggestions`); } catch { state.suggestions = []; }
@@ -798,6 +804,16 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-science-like]') && state.user) {
+      const id = e.target.closest('[data-science-like]').dataset.scienceLike;
+      await api(`/api/science/${id}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('science_like'); await loadAux(); renderScience(); return;
+    }
+    if (e.target.closest('[data-science-share]') && state.user) {
+      const id = e.target.closest('[data-science-share]').dataset.scienceShare;
+      await api(`/api/science/${id}/share`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message));
+      trackEvent('science_share'); await loadAux(); renderScience(); return;
+    }
     if (e.target.id === 'adForm' && state.user) {
       e.preventDefault(); const payload = Object.fromEntries(new FormData(e.target)); payload.userId = state.user.id;
       await api('/api/ads', { method:'POST', body: JSON.stringify(payload) }).catch(err=>alert(err.message));
