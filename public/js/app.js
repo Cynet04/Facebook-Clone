@@ -459,8 +459,11 @@
     catch (err) { $('#authMsg').textContent = err.message; }
   });
   $('#refreshBtn')?.addEventListener('click', async () => { if (!state.user) return; await loadFeed(true); });
-  $('#logoutBtn').addEventListener('click', () => { $('#accountMenu').classList.add('hidden'); setSession(null, ''); });
-  $('#profileBtn').addEventListener('click', () => $('#accountMenu').classList.toggle('hidden'));
+  $('#logoutBtn').addEventListener('click', () => { $('#accountMenu').classList.add('hidden'); $('#profileBtn')?.setAttribute('aria-expanded','false'); setSession(null, ''); });
+  $('#profileBtn').addEventListener('click', () => { const hidden = $('#accountMenu').classList.toggle('hidden'); $('#profileBtn').setAttribute('aria-expanded', String(!hidden)); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { $('#accountMenu').classList.add('hidden'); $('#profileBtn')?.setAttribute('aria-expanded','false'); $('#messengerOverlay').classList.add('hidden'); $('#notifDropdown').classList.add('hidden'); }
+  });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#profileBtn') && !e.target.closest('#accountMenu')) $('#accountMenu').classList.add('hidden');
     if (!e.target.closest('#messengerBtn') && !e.target.closest('#messengerOverlay')) $('#messengerOverlay').classList.add('hidden');

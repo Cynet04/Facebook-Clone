@@ -162,11 +162,11 @@
 - [x] Verify and commit
 
 ## Phase 25: Accessibility Pass (MVP)
-- [ ] Add/verify ARIA labels, landmarks, and focus-visible styles
-- [ ] Improve keyboard navigation for menus, dialogs, and forms
-- [ ] Add skip link and better heading structure
-- [ ] Ensure color-contrast-safe status indicators in both themes
-- [ ] Verify and commit
+- [x] Add/verify ARIA labels, landmarks, and focus-visible styles
+- [x] Improve keyboard navigation for menus, dialogs, and forms
+- [x] Add skip link and better heading structure
+- [x] Ensure color-contrast-safe status indicators in both themes
+- [x] Verify and commit
 
 ## Phase 26+: Infinite
 - [ ] User blocking/reporting mock expansion

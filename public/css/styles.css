@@ -34,6 +34,9 @@ select { font: inherit; }
 .msg { color: #d93025; min-height: 1.2em; font-size: 13px; }
 .row { display: flex; align-items: center; }
 .gap { gap: 8px; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--blue) 65%, #fff); outline-offset: 2px; }
+.skip-link { position: absolute; left: 8px; top: -40px; background: var(--blue); color: #fff; padding: 8px 10px; border-radius: 6px; z-index: 100; }
+.skip-link:focus { top: 8px; }
 .navbar {
   position: sticky; top: 0; z-index: 50; height: 56px; background: var(--card);
   display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
@@ -67,7 +70,8 @@ select { font: inherit; }
 .nav-icon.active { color: var(--blue); border-bottom: 3px solid var(--blue); border-radius: 0; }
 .offline-badge { background: #f02849; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 12px; }
 .status-line { font-size: 12px; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.status-error { color: #f02849; }
+.status-error { color: #f02849; font-weight: 600; }
+html[data-theme="dark"] .status-error { color: #ff7a90; }
 .icon-btn {
   width: 40px; height: 40px; border: none; border-radius: 50%; background: var(--line);
   cursor: pointer; display: grid; place-items: center; position: relative;

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 <body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
   <div id="app">
     <header class="navbar" role="banner">
       <div class="nav-left">
@@ -30,10 +31,10 @@
         <button class="icon-btn" id="themeBtn" title="Toggle dark mode">🌙</button>
         <button class="icon-btn" id="messengerBtn" title="Messenger">💬</button>
         <button class="icon-btn" id="notifBtn" title="Notifications">🔔<span id="notifBadge" class="badge hidden">0</span></button>
-        <button class="icon-btn profile-chip" id="profileBtn" title="Account">
+        <button class="icon-btn profile-chip" id="profileBtn" title="Account" aria-haspopup="menu" aria-expanded="false" aria-controls="accountMenu">
           <span class="avatar-sm" id="navAvatar">U</span>
         </button>
-        <div class="dropdown hidden" id="accountMenu">
+        <div class="dropdown hidden" id="accountMenu" role="menu" aria-label="Account menu">
           <div id="accountInfo" class="menu-item"></div>
           <button data-view="profile" class="menu-item">Profile</button>
           <button data-view="settings" class="menu-item">Settings & Privacy</button>
@@ -58,7 +59,7 @@
         <div id="shortcutsList" class="muted menu-item">No shortcuts yet</div>
       </aside>
 
-      <section class="feed" aria-label="Main content">
+      <section class="feed" id="mainContent" aria-label="Main content" tabindex="-1">
         <div id="authGate" class="card auth-gate hidden">
           <h2>Log in to Facebook Clone</h2>
           <form id="loginForm" class="stack">
