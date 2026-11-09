@@ -259,9 +259,16 @@
 - [x] Track suggestion interactions (add friend/block) via analytics
 - [x] Verify and commit
 
-## Phase 39+: Infinite
-- [ ] Hashtags/mentions stub
+## Phase 39: Hashtags & Mentions (Stub)
+- [x] Parse #hashtags and @mentions in post/comment rendering
+- [x] Make hashtag/mention tokens clickable (search/profile navigation mock)
+- [x] Add hashtag index in search results (simple client/server scan)
+- [x] Track hashtag/mention interactions via analytics
+- [x] Verify and commit
+
+## Phase 40+: Infinite
 - [ ] Link previews mock
 - [ ] Poll posts
 - [ ] Watch/videos stub
+- [ ] Memories/on-this-day
 - [ ] ...continue indefinitely

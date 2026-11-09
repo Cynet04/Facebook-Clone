@@ -33,7 +33,16 @@
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function richText(s) {
+    const safe = esc(s);
+    return safe
+      .replace(/(^|[\s(])(#[\p{L}0-9_]+)/gu, '$1<a href="#" class="token-link" data-hashtag="$2">$2</a>')
+      .replace(/(^|[\s(])@([\p{L}0-9_]+)/gu, (_, pre, name) => {
+        const u = state.users.find(x => (x.name||'').toLowerCase().replace(/\s+/g,'') === String(name).toLowerCase());
+        return u ? `${pre}<a href="#" class="token-link" data-open-profile="${esc(u.id)}">@${esc(name)}</a>` : `${pre}@${esc(name)}`;
+      });
+  }
   const initials = (name) => (name || 'U').trim().split(/\s+/).slice(0,2).map(p=>p[0]?.toUpperCase()||'').join('') || 'U';
   const timeAgo = (iso) => {
     if (!iso) return '';
@@ -168,7 +177,7 @@
     const children = (c.children||[]).map(ch => renderComment(ch, postId, depth+1)).join('');
     const mine = c.userId === state.user?.id;
     return `<div class="comment-block" style="margin-left:${Math.min(depth,3)*14}px" data-comment-id="${esc(c.id)}">
-      <div class="comment" id="comment-body-${esc(c.id)}"><strong>${esc(userById(c.userId).name)}</strong><span>${esc(c.content)}</span>${c.editedAt ? ' <span class="muted">(edited)</span>' : ''}</div>
+      <div class="comment" id="comment-body-${esc(c.id)}"><strong>${esc(userById(c.userId).name)}</strong><span>${richText(c.content)}</span>${c.editedAt ? ' <span class="muted">(edited)</span>' : ''}</div>
       <form class="comment-form comment-edit hidden" id="comment-edit-${esc(c.id)}" data-edit-comment-form="${esc(c.id)}"><input name="content" maxlength="1000" value="${esc(c.content)}" /><button class="btn small primary" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-comment="${esc(c.id)}">Cancel</button></form>
       <div class="comment-actions">
         ${['like','love','haha'].map(r=>`<button class="linkish ${my===r?'active':''}" data-react-comment="${esc(c.id)}" data-reaction="${r}">${reactionMeta(r)[0]}</button>`).join('')}
@@ -199,7 +208,7 @@
         </div>
         ${(p.pinned || p.highlighted) ? `<div class="post-flags">${p.pinned?'<span class="pill">Pinned</span>':''}${p.highlighted?'<span class="pill">Highlight</span>':''}</div>` : ''}
         ${p.sharedFrom ? `<div class="shared-note muted">Shared from <a href="#" data-open-profile="${esc(p.sharedFrom.userId)}">${esc(userById(p.sharedFrom.userId).name)}</a></div>` : ''}
-        <div class="post-body" id="post-body-${esc(p.id)}">${esc(p.content)}</div>
+        <div class="post-body" id="post-body-${esc(p.id)}">${richText(p.content)}</div>
         <form class="post-edit hidden stack" id="post-edit-${esc(p.id)}" data-edit-form="${esc(p.id)}"><textarea name="content" maxlength="5000">${esc(p.content)}</textarea><div class="row gap"><button class="btn primary small" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-post="${esc(p.id)}">Cancel</button></div></form>
         ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>
@@ -441,10 +450,15 @@
     const b = blockedIds();
     const users = state.users.filter(u => !b.has(u.id) && (u.name||'').toLowerCase().includes(q));
     const posts = visiblePosts().filter(p => (p.content||'').toLowerCase().includes(q));
-    meta.textContent = `Query: "${state.searchQuery}" · ${users.length} people · ${posts.length} posts`;
+    const tags = {};
+    visiblePosts().forEach(p => extractHashtags(p.content).forEach(t => { if (t.toLowerCase().includes(q.replace(/^#/,''))) tags[t]=(tags[t]||0)+1; }));
+    const tagList = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    meta.textContent = `Query: "${state.searchQuery}" · ${users.length} people · ${posts.length} posts · ${tagList.length} hashtags`;
     $('#searchResults').innerHTML = `
       <div class="section-title">People</div>
       ${users.map(u=>`<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}">${esc(u.name)}</a></div>`).join('') || '<div class="muted">No people found.</div>'}
+      <div class="section-title">Hashtags</div>
+      ${tagList.map(([t,n])=>`<div class="list-row"><a href="#" data-hashtag="${esc(t)}">${esc(t)}</a><span class="muted">${n} posts</span></div>`).join('') || '<div class="muted">No hashtags found.</div>'}
       <div class="section-title">Posts</div>
       ${posts.map(p=>postCard(p)).join('') || '<div class="muted">No posts found.</div>'}
     `;
@@ -657,6 +671,8 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    const hash = e.target.closest('[data-hashtag]');
+    if (hash) { e.preventDefault(); state.searchQuery = hash.dataset.hashtag; $('#globalSearch').value = state.searchQuery; state.view = 'search'; trackEvent('hashtag_click', { tag: state.searchQuery }); renderView(); return; }
     const profileLink = e.target.closest('[data-open-profile]');
     if (profileLink) { e.preventDefault(); state.profileUserId = profileLink.dataset.openProfile; state.view = 'profile'; state._editingProfile = false; renderView(); return; }
     if (e.target.id === 'toggleEditProfile') { state._editingProfile = !state._editingProfile; renderProfile(); return; }
