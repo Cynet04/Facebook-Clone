@@ -273,9 +273,16 @@
 - [x] Cache preview metadata client-side in-memory/localStorage mock
 - [x] Verify and commit
 
-## Phase 41+: Infinite
-- [ ] Poll posts
+## Phase 41: Poll Posts (Mock)
+- [x] Add poll data model/API support on posts (options, votes)
+- [x] Add poll composer UI (question + 2-4 options)
+- [x] Render poll in posts and allow single-choice voting
+- [x] Persist votes per user and show percentages/counts
+- [x] Verify and commit
+
+## Phase 42+: Infinite
 - [ ] Watch/videos stub
 - [ ] Memories/on-this-day
 - [ ] Events stub
+- [ ] Birthdays stub
 - [ ] ...continue indefinitely
