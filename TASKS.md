@@ -176,11 +176,11 @@
 - [x] Verify and commit
 
 ## Phase 27: Performance Polish (Mock-safe)
-- [ ] Debounce search input and avoid unnecessary renders
-- [ ] Cache DOM selectors and limit comment loading work
-- [ ] Add lightweight loading skeleton/placeholder states
-- [ ] Optimize polling/render guards for visible view only
-- [ ] Verify and commit
+- [x] Debounce search input and avoid unnecessary renders
+- [x] Cache DOM selectors and limit comment loading work
+- [x] Add lightweight loading skeleton/placeholder states
+- [x] Optimize polling/render guards for visible view only
+- [x] Verify and commit
 
 ## Phase 28+: Infinite
 - [ ] i18n stub

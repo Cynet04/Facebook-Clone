@@ -25,7 +25,8 @@
     profileUserId: null,
     searchQuery: '',
     lastUpdatedAt: null,
-    lastError: ''
+    lastError: '',
+    searchTimer: null
   };
 
   const $ = (s, r = document) => r.querySelector(s);
@@ -428,8 +429,11 @@
   async function loadUsers() { state.users = await api('/api/users'); renderContactsInto('#contactsList'); }
   async function loadCommentsForPosts() {
     state.commentsByPost = {};
-    await Promise.all(state.posts.slice(0, 25).map(async p => {
-      try { state.commentsByPost[p.id] = await api(`/api/posts/${p.id}/comments`); } catch { state.commentsByPost[p.id] = []; }
+    const targetIds = new Set(visiblePosts().slice(0, 15).map(p => p.id));
+    if (state.view === 'profile') state.posts.filter(p => p.userId === (state.profileUserId || state.user.id)).slice(0,10).forEach(p=>targetIds.add(p.id));
+    if (state.view === 'search') state.posts.filter(p => (p.content||'').toLowerCase().includes((state.searchQuery||'').toLowerCase())).slice(0,10).forEach(p=>targetIds.add(p.id));
+    await Promise.all([...targetIds].map(async id => {
+      try { state.commentsByPost[id] = await api(`/api/posts/${id}/comments`); } catch { state.commentsByPost[id] = []; }
     }));
   }
   async function loadAux() {
@@ -445,6 +449,7 @@
   async function loadFeed(reset = false) {
     if (!state.user || state._loadingFeed) return;
     state._loadingFeed = true;
+    if (reset && state.view === 'home') $('#feedLoading')?.classList.remove('hidden');
     try {
       await loadUsers();
       await loadPosts(reset);
@@ -454,7 +459,7 @@
       state.lastUpdatedAt = new Date().toISOString();
       renderView();
       renderStatus();
-    } finally { state._loadingFeed = false; }
+    } finally { state._loadingFeed = false; $('#feedLoading')?.classList.add('hidden'); }
   }
 
   // Auth/session
@@ -501,8 +506,16 @@
     input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed(true);
   });
 
+  $('#globalSearch').addEventListener('input', (e) => {
+    clearTimeout(state.searchTimer);
+    state.searchTimer = setTimeout(() => {
+      state.searchQuery = e.target.value.trim();
+      if (state.view === 'search') renderView();
+    }, 250);
+  });
   $('#globalSearch').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
+    clearTimeout(state.searchTimer);
     state.searchQuery = e.target.value.trim();
     state.view = 'search'; renderView();
   });
@@ -650,5 +663,10 @@
   function updateOnline() { $('#offlineBadge')?.classList.toggle('hidden', navigator.onLine); renderStatus(); }
   window.addEventListener('online', updateOnline); window.addEventListener('offline', updateOnline); updateOnline();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
-  setInterval(() => { if (!state.user || document.hidden || state._loadingFeed) return; loadAux().then(() => { state.lastUpdatedAt = new Date().toISOString(); if (['home','messenger','moderation'].includes(state.view)) renderView(); renderStatus(); }).catch(()=>{}); }, 15000);
+  setInterval(() => {
+    if (!state.user || document.hidden || state._loadingFeed) return;
+    const activeViews = ['home','messenger','moderation','groups','search'];
+    if (!activeViews.includes(state.view)) return;
+    loadAux().then(() => { state.lastUpdatedAt = new Date().toISOString(); renderView(); renderStatus(); }).catch(()=>{});
+  }, 20000);
 })();
