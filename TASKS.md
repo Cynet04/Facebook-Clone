@@ -77,9 +77,16 @@
 - [x] Show group posts in group view
 - [x] Verify and commit
 
-## Phase 13+: Infinite
-- [ ] Media uploads (mock URLs)
+## Phase 13: Media URLs (Mock) & Post Enhancements
+- [x] Allow optional image URL on posts
+- [x] Render post images safely in feed/profile/search
+- [x] Add image URL field in composer UI
+- [x] Basic client/server validation for image URL
+- [x] Verify and commit
+
+## Phase 14+: Infinite
 - [ ] Marketplace stub
 - [ ] Privacy/settings mock
 - [ ] Bookmarks/saved posts
+- [ ] Pagination/infinite scroll mock
 - [ ] ...continue indefinitely

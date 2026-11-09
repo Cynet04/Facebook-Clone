@@ -82,6 +82,9 @@ hr { border: none; border-top: 1px solid var(--line); margin: 8px 0; }
 .composer .row { display: flex; gap: 8px; align-items: center; }
 .composer input { flex: 1; border: none; background: var(--input); border-radius: 20px; padding: 10px 14px; outline: none; color: var(--text); }
 .composer-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.composer-media-row { margin-top: 8px; }
+.composer-media-row input { width: 100%; }
+.post-image { width: calc(100% + 24px); margin: 8px -12px 0; max-height: 520px; object-fit: cover; display: block; background: var(--input); }
 .btn { border: none; border-radius: 6px; padding: 10px 16px; font-weight: 600; cursor: pointer; background: var(--line); }
 .btn.primary { background: var(--blue); color: #fff; }
 .btn.primary:hover { background: var(--blue-hover); }

@@ -88,10 +88,12 @@ app.get('/api/posts', (req, res) => {
   res.json(posts);
 });
 app.post('/api/posts', (req, res) => {
-  const { userId, content } = req.body || {};
+  const { userId, content, imageUrl } = req.body || {};
   if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
+  const img = String(imageUrl || '').trim();
+  if (img && !/^https?:\/\//i.test(img)) return res.status(400).json({ error: 'Image URL must start with http(s)://' });
   const db = readDB();
-  const post = { id: uid('p'), userId, content, likes: [], reactions: {}, createdAt: new Date().toISOString() };
+  const post = { id: uid('p'), userId, content: String(content).slice(0, 5000), imageUrl: img.slice(0, 500), likes: [], reactions: {}, createdAt: new Date().toISOString() };
   db.posts = db.posts || [];
   db.posts.push(post);
   writeDB(db);

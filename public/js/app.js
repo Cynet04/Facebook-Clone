@@ -126,6 +126,7 @@
           </div>
         </div>
         <div class="post-body">${esc(p.content)}</div>
+        ${p.imageUrl ? `<img class="post-image" src="${esc(p.imageUrl)}" alt="Post image" loading="lazy" />` : ''}
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments</span></div>
         <div class="post-actions">
           <div class="react-wrap">
@@ -360,9 +361,11 @@
 
   $('#postBtn').addEventListener('click', async () => {
     const input = $('#postInput'); const content = input.value.trim();
+    const imageUrl = ($('#postImageInput')?.value || '').trim();
     if (!content || !state.user) return;
-    await api('/api/posts', { method: 'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(e=>alert(e.message));
-    input.value = ''; await loadFeed();
+    if (imageUrl && !/^https?:\/\//i.test(imageUrl)) { alert('Image URL must start with http(s)://'); return; }
+    await api('/api/posts', { method: 'POST', body: JSON.stringify({ userId: state.user.id, content, imageUrl }) }).catch(e=>alert(e.message));
+    input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed();
   });
 
   $('#globalSearch').addEventListener('keydown', (e) => {
