@@ -131,6 +131,15 @@
               </form>
             </div>
             <div class="card"><h3>Groups</h3><div id="groupsList"></div></div>
+            <div id="groupDetailCard" class="card hidden">
+              <div class="row space-between"><h3 id="groupDetailTitle">Group</h3><span id="groupDetailMeta" class="muted"></span></div>
+              <form id="groupPostForm" class="row gap hidden">
+                <input name="content" placeholder="Write something to the group..." maxlength="2000" />
+                <button class="btn primary small" type="submit">Post</button>
+              </form>
+              <p id="groupGateMsg" class="muted"></p>
+              <div id="groupPosts"></div>
+            </div>
           </div>
 
           <div id="messengerView" class="hidden">

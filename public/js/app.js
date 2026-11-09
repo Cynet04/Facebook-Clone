@@ -8,6 +8,8 @@
     stories: [],
     notifications: [],
     groups: [],
+    groupPosts: [],
+    activeGroupId: null,
     conversations: [],
     messages: [],
     activeChatUserId: null,
@@ -208,8 +210,33 @@
     $('#friendsList').innerHTML = friends.length ? friends.map(u => `<div class="list-row"><a href="#" data-open-profile="${esc(u.id)}" class="row gap"><span class="avatar-sm">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></a><button class="btn small" data-message-user="${esc(u.id)}">Message</button></div>`).join('') : '<div class="muted">No friends yet.</div>';
   }
 
+  async function loadGroupPosts() {
+    if (!state.activeGroupId) { state.groupPosts = []; return; }
+    try { state.groupPosts = await api(`/api/groups/${state.activeGroupId}/posts`); } catch { state.groupPosts = []; }
+  }
+  function renderGroupDetail() {
+    const card = $('#groupDetailCard');
+    const g = state.groups.find(x => x.id === state.activeGroupId);
+    if (!card) return;
+    if (!g) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    const member = (g.members || []).includes(state.user.id);
+    $('#groupDetailTitle').textContent = g.name;
+    $('#groupDetailMeta').textContent = `${(g.members||[]).length} members`;
+    $('#groupPostForm').classList.toggle('hidden', !member);
+    $('#groupGateMsg').textContent = member ? '' : 'Join this group to view/post in its feed (posting restricted).';
+    $('#groupPosts').innerHTML = state.groupPosts.length
+      ? state.groupPosts.map(p => `<div class="card subtle"><div class="post-head"><span class="avatar-sm">${esc(initials(userById(p.userId).name))}</span><div><div class="post-author">${esc(userById(p.userId).name)}</div><div class="post-time">${esc(timeAgo(p.createdAt))}</div></div></div><div class="post-body">${esc(p.content)}</div></div>`).join('')
+      : `<div class="muted">${member ? 'No group posts yet.' : 'Group posts are visible to members in this MVP view after joining.'}</div>`;
+  }
+
   function renderGroups() {
-    $('#groupsList').innerHTML = state.groups.length ? state.groups.map(g => `<div class="list-row"><span><strong>${esc(g.name)}</strong> <span class="muted">· ${(g.members||[]).length} members</span></span><button class="btn small" data-join-group="${esc(g.id)}">${(g.members||[]).includes(state.user.id)?'Joined':'Join'}</button></div>`).join('') : '<div class="muted">No groups yet.</div>';
+    $('#groupsList').innerHTML = state.groups.length ? state.groups.map(g => {
+      const joined = (g.members||[]).includes(state.user.id);
+      const active = g.id === state.activeGroupId ? ' active-row' : '';
+      return `<div class="list-row${active}"><a href="#" data-open-group="${esc(g.id)}"><strong>${esc(g.name)}</strong> <span class="muted">· ${(g.members||[]).length} members</span></a><button class="btn small ${joined?'':'primary'}" data-join-group="${esc(g.id)}">${joined?'Joined':'Join'}</button></div>`;
+    }).join('') : '<div class="muted">No groups yet.</div>';
+    renderGroupDetail();
   }
 
   function notifText(n) {
@@ -295,6 +322,7 @@
     state.posts = await api('/api/posts');
     await loadCommentsForPosts();
     await loadAux();
+    if (state.view === 'groups') await loadGroupPosts();
     refreshSessionUser();
     renderView();
   }
@@ -371,8 +399,10 @@
     if (msgBtn) { state.activeChatUserId = msgBtn.dataset.messageUser; state.view = 'messenger'; renderView(); renderMessengerPage(); $('#messengerOverlay').classList.remove('hidden'); renderMessengerOverlay(); return; }
     const chat = e.target.closest('[data-chat-user]');
     if (chat) { state.activeChatUserId = chat.dataset.chatUser; renderMessengerPage(); renderMessengerOverlay(); return; }
+    const openGroup = e.target.closest('[data-open-group]');
+    if (openGroup) { e.preventDefault(); state.activeGroupId = openGroup.dataset.openGroup; await loadGroupPosts(); renderGroups(); return; }
     const join = e.target.closest('[data-join-group]');
-    if (join) { await api(`/api/groups/${join.dataset.joinGroup}/join`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); await loadAux(); renderGroups(); return; }
+    if (join) { await api(`/api/groups/${join.dataset.joinGroup}/join`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); state.activeGroupId = state.activeGroupId || join.dataset.joinGroup; await loadAux(); await loadGroupPosts(); renderGroups(); return; }
   });
 
   document.addEventListener('submit', async (e) => {
@@ -388,6 +418,14 @@
       const data = Object.fromEntries(new FormData(e.target));
       await api(`/api/users/${state.user.id}`, { method:'PATCH', body: JSON.stringify(data) }).catch(err=>alert(err.message));
       state._editingProfile = false; await loadFeed(); return;
+    }
+    if (e.target.id === 'groupPostForm') {
+      e.preventDefault();
+      if (!state.activeGroupId) return;
+      const content = new FormData(e.target).get('content');
+      if (!String(content||'').trim()) return;
+      await api(`/api/groups/${state.activeGroupId}/posts`, { method:'POST', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
+      e.target.reset(); await loadGroupPosts(); renderGroups(); return;
     }
     const chatForm = e.target.closest('[data-send-chat]');
     if (chatForm) {

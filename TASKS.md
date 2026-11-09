@@ -70,9 +70,16 @@
 - [x] Stories: render stories rail on home feed
 - [x] Stories: allow creating a text story
 
-## Phase 12+: Infinite
-- [ ] Group feed/posts (dedicated)
+## Phase 12: Group Feed (Dedicated)
+- [x] Add group posts API (list/create)
+- [x] Add group detail/feed UI with member gate
+- [x] Allow members to post in group feed
+- [x] Show group posts in group view
+- [x] Verify and commit
+
+## Phase 13+: Infinite
 - [ ] Media uploads (mock URLs)
 - [ ] Marketplace stub
 - [ ] Privacy/settings mock
+- [ ] Bookmarks/saved posts
 - [ ] ...continue indefinitely

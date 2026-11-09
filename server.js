@@ -236,6 +236,26 @@ app.post('/api/groups/:id/join', (req, res) => {
   writeDB(db);
   res.json(group);
 });
+app.get('/api/groups/:id/posts', (req, res) => {
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Not found' });
+  const posts = [...(group.posts || [])].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  res.json(posts);
+});
+app.post('/api/groups/:id/posts', (req, res) => {
+  const { userId, content } = req.body || {};
+  if (!userId || !content) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const group = (db.groups || []).find(g => g.id === req.params.id);
+  if (!group) return res.status(404).json({ error: 'Not found' });
+  if (!(group.members || []).includes(userId)) return res.status(403).json({ error: 'Join group to post' });
+  const post = { id: uid('gp'), groupId: group.id, userId, content: String(content).slice(0, 2000), createdAt: new Date().toISOString() };
+  group.posts = group.posts || [];
+  group.posts.push(post);
+  writeDB(db);
+  res.status(201).json(post);
+});
 
 // Messenger (Phase 6)
 app.get('/api/messages', (req, res) => {

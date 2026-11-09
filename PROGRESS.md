@@ -8,3 +8,4 @@
 - 2026-11-09: Implemented Phase 10 Reactions MVP (`/api/posts/:id/react`, reaction picker UI, reaction summary, legacy like compatibility). Tests/syntax passing. Push attempts continue against placeholder remote and are logged when failing.
 - 2026-11-09: Updated `origin` remote to `https://github.com/Cynet04/Facebook-Clone.git`.
 - 2026-11-09: Implemented Phase 11 Search & Stories MVP (search meta/no-query state, stories API + 24h filter, home stories rail + create story). Tests/syntax passing; committing and pushing to updated remote.
+- 2026-11-09: Implemented Phase 12 dedicated Group Feed MVP (group post list/create API, member-gated posting, group detail/feed UI). Tests/syntax passing; pushing to `origin/main`.
