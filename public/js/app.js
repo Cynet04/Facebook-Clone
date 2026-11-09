@@ -130,7 +130,7 @@
 
   function renderView() {
     if (!state.user) return;
-    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
+    ['home','profile','friends','groups','messenger','search','marketplace','watch','events','birthdays','saved','settings','moderation'].forEach(v => $(`#${v}View`)?.classList.toggle('hidden', state.view !== v));
     $$('.nav-icon').forEach(el => el.classList.toggle('active', el.dataset.view === state.view));
     if (state.view === 'profile') renderProfile();
     if (state.view === 'home') renderPosts();
@@ -140,6 +140,7 @@
     if (state.view === 'marketplace') renderMarketplace();
     if (state.view === 'watch') renderWatch();
     if (state.view === 'events') renderEvents();
+    if (state.view === 'birthdays') renderBirthdays();
     if (state.view === 'saved') renderSaved();
     if (state.view === 'settings') renderSettings();
     if (state.view === 'moderation') renderModeration();
@@ -434,7 +435,15 @@
   }
   function renderMessengerPage() { renderMessengerPane('#messengerPage', false); }
 
-  function renderEvents() {
+  function renderBirthdays() {
+    const today = new Date();
+    const list = (state.users||[]).filter(u => u.id !== state.user?.id && !blockedSet().has(u.id) && u.birthday).map(u => {
+      const d = new Date(u.birthday); if (Number.isNaN(d.getTime())) return null;
+      const next = new Date(today.getFullYear(), d.getMonth(), d.getDate()); if (next < new Date(today.getFullYear(),today.getMonth(),today.getDate())) next.setFullYear(next.getFullYear()+1);
+      return { u, next, days: Math.round((next - new Date(today.getFullYear(),today.getMonth(),today.getDate()))/86400000) };
+    }).filter(Boolean).sort((a,b)=>a.days-b.days).slice(0,12);
+    $('#birthdaysView').innerHTML = `<div class="card"><h2>Birthdays</h2><p class="muted">Mock upcoming birthdays. Add <code>birthday</code> (YYYY-MM-DD) to users in data for more results.</p></div>${list.length ? list.map(x=>`<div class="card row" style="justify-content:space-between"><div><strong>${esc(x.u.name)}</strong><div class="muted">${x.days===0?'Today':`In ${x.days} day${x.days===1?'':'s'}`} · ${esc(x.next.toLocaleDateString())}</div></div><button class="btn small primary" data-birthday-wish="${esc(x.u.id)}">Send wish</button></div>`).join('') : '<div class="card muted">No upcoming birthdays found.</div>'}`;
+  }
     const items = (state.eventItems||[]).slice().sort((a,b)=>new Date(a.date||0)-new Date(b.date||0));
     $('#eventsView').innerHTML = `
       <div class="card"><h2>Events</h2><p class="muted">Mock events and RSVP stub.</p>
@@ -708,6 +717,7 @@
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
     if (focusBtn) { $(`[data-comment-form="${focusBtn.dataset.focusComment}"] input`)?.focus(); return; }
+    if (e.target.closest('[data-birthday-wish]') && state.user) { const id = e.target.closest('[data-birthday-wish]').dataset.birthdayWish; await api('/api/notifications', { method:'POST', body: JSON.stringify({ userId: id, type:'birthday_wish', actorId: state.user.id, message:`${state.user.name} sent you birthday wishes (mock).` }) }).catch(()=>{}); trackEvent('birthday_wish',{targetId:id}); alert('Wish sent (mock).'); return; }
     if (e.target.closest('[data-event-rsvp]') && state.user) { const id = e.target.closest('[data-event-rsvp]').dataset.eventRsvp; await api(`/api/events/${id}/rsvp`, { method:'POST', body: JSON.stringify({ userId: state.user.id }) }).catch(err=>alert(err.message)); trackEvent('event_rsvp'); await loadAux(); renderEvents(); return; }
     if (e.target.closest('[data-memory-open]')) { trackEvent('memory_open'); state.view='home'; renderView(); return; }
     const watchLike = e.target.closest('[data-watch-like]');

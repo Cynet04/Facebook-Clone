@@ -302,11 +302,11 @@
 - [x] Verify and commit
 
 ## Phase 45: Birthdays Stub
-- [ ] Add birthday fields/helpers and mock upcoming birthdays list
-- [ ] Add Birthdays view/card in sidebar/home
-- [ ] Allow quick "wish" interaction (mock notification/analytics)
-- [ ] Handle empty states
-- [ ] Verify and commit
+- [x] Add birthday fields/helpers and mock upcoming birthdays list
+- [x] Add Birthdays view in sidebar
+- [x] Allow quick "wish" interaction (mock notification/analytics)
+- [x] Handle empty states
+- [x] Verify and commit
 
 ## Phase 46+: Infinite
 - [ ] Fundraisers stub
