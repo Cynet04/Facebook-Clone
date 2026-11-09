@@ -134,11 +134,11 @@
 - [x] Verify and commit
 
 ## Phase 21: Comment Edit/Delete (MVP)
-- [ ] Add edit/delete comment APIs with owner checks
-- [ ] Add owner actions on comments/replies
-- [ ] Support inline edit and delete (with child reply handling policy)
-- [ ] Refresh affected post comments after mutations
-- [ ] Verify and commit
+- [x] Add edit/delete comment APIs with owner checks
+- [x] Add owner actions on comments/replies
+- [x] Support inline edit and delete (with child reply handling policy)
+- [x] Refresh affected post comments after mutations
+- [x] Verify and commit
 
 ## Phase 22+: Infinite
 - [ ] Admin/moderation stubs

@@ -136,12 +136,15 @@
   function renderComment(c, postId, depth=0) {
     const my = c.reactions?.[state.user?.id];
     const children = (c.children||[]).map(ch => renderComment(ch, postId, depth+1)).join('');
-    return `<div class="comment-block" style="margin-left:${Math.min(depth,3)*14}px">
-      <div class="comment"><strong>${esc(userById(c.userId).name)}</strong>${esc(c.content)}</div>
+    const mine = c.userId === state.user?.id;
+    return `<div class="comment-block" style="margin-left:${Math.min(depth,3)*14}px" data-comment-id="${esc(c.id)}">
+      <div class="comment" id="comment-body-${esc(c.id)}"><strong>${esc(userById(c.userId).name)}</strong><span>${esc(c.content)}</span>${c.editedAt ? ' <span class="muted">(edited)</span>' : ''}</div>
+      <form class="comment-form comment-edit hidden" id="comment-edit-${esc(c.id)}" data-edit-comment-form="${esc(c.id)}"><input name="content" maxlength="1000" value="${esc(c.content)}" /><button class="btn small primary" type="submit">Save</button><button class="btn small" type="button" data-cancel-edit-comment="${esc(c.id)}">Cancel</button></form>
       <div class="comment-actions">
         ${['like','love','haha'].map(r=>`<button class="linkish ${my===r?'active':''}" data-react-comment="${esc(c.id)}" data-reaction="${r}">${reactionMeta(r)[0]}</button>`).join('')}
         <span class="muted">${esc(commentReactionLabel(c))}</span>
         <button class="linkish" data-reply-comment="${esc(c.id)}" data-post-id="${esc(postId)}">Reply</button>
+        ${mine ? `<button class="linkish" data-edit-comment="${esc(c.id)}">Edit</button><button class="linkish danger" data-delete-comment="${esc(c.id)}">Delete</button>` : ''}
       </div>
       <form class="comment-form reply-form hidden" data-comment-form="${esc(postId)}" data-parent-id="${esc(c.id)}"><input name="content" placeholder="Write a reply..." maxlength="500" /></form>
       ${children}
@@ -523,6 +526,12 @@
       await api(`/api/comments/${reactComment.dataset.reactComment}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactComment.dataset.reaction || 'like' }) }).catch(()=>{});
       await loadFeed(); return;
     }
+    const editComment = e.target.closest('[data-edit-comment]');
+    if (editComment) { $(`#comment-body-${editComment.dataset.editComment}`)?.classList.add('hidden'); $(`#comment-edit-${editComment.dataset.editComment}`)?.classList.remove('hidden'); return; }
+    const cancelEditComment = e.target.closest('[data-cancel-edit-comment]');
+    if (cancelEditComment) { $(`#comment-body-${cancelEditComment.dataset.cancelEditComment}`)?.classList.remove('hidden'); $(`#comment-edit-${cancelEditComment.dataset.cancelEditComment}`)?.classList.add('hidden'); return; }
+    const delComment = e.target.closest('[data-delete-comment]');
+    if (delComment && state.user) { if (!confirm('Delete this comment and its replies?')) return; await api(`/api/comments/${delComment.dataset.deleteComment}?userId=${encodeURIComponent(state.user.id)}`, { method:'DELETE' }).catch(err=>alert(err.message)); await loadFeed(); return; }
     const replyBtn = e.target.closest('[data-reply-comment]');
     if (replyBtn) { const f = $(`form[data-comment-form="${replyBtn.dataset.postId}"][data-parent-id="${replyBtn.dataset.replyComment}"]`); f?.classList.toggle('hidden'); f?.querySelector('input')?.focus(); return; }
     const focusBtn = e.target.closest('[data-focus-comment]');
@@ -550,6 +559,13 @@
       e.preventDefault();
       const content = new FormData(editPostForm).get('content');
       await api(`/api/posts/${editPostForm.dataset.editForm}`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
+      await loadFeed(); return;
+    }
+    const editCommentForm = e.target.closest('[data-edit-comment-form]');
+    if (editCommentForm && state.user) {
+      e.preventDefault();
+      const content = new FormData(editCommentForm).get('content');
+      await api(`/api/comments/${editCommentForm.dataset.editCommentForm}`, { method:'PATCH', body: JSON.stringify({ userId: state.user.id, content }) }).catch(err=>alert(err.message));
       await loadFeed(); return;
     }
     const commentForm = e.target.closest('[data-comment-form]');

@@ -17,3 +17,4 @@
 - 2026-11-09: Implemented Phase 18 Post Sharing/Repost MVP (`/api/posts/:id/share`, share action, attribution UI, share count/notification, basic rapid-share guard). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 19 Comment Replies & Reactions MVP (`parentId` replies, `/api/comments/:id/react`, nested UI, reply composer, comment reaction controls/counts, reply notifications). Tests/syntax passing; pushed to `origin/main`.
 - 2026-11-09: Implemented Phase 20 Post Editing & Deletion MVP (owner-checked `PATCH/DELETE /api/posts/:id`, post menu, inline edit/save/cancel, delete confirmation, cleanup of related comments/saved refs). Tests/syntax passing; pushed to `origin/main`.
+- 2026-11-09: Implemented Phase 21 Comment Edit/Delete MVP (owner-checked `PATCH/DELETE /api/comments/:id`, descendant reply removal on delete, inline comment edit UI, owner actions). Tests/syntax passing; committing/pushing to `origin/main`.

@@ -240,6 +240,36 @@ app.post('/api/posts/:id/comments', (req, res) => {
   writeDB(db);
   res.status(201).json(comment);
 });
+app.patch('/api/comments/:id', (req, res) => {
+  const { userId, content } = req.body || {};
+  if (!userId || !String(content || '').trim()) return res.status(400).json({ error: 'Missing fields' });
+  const db = readDB();
+  const comment = (db.comments || []).find(c => c.id === req.params.id);
+  if (!comment) return res.status(404).json({ error: 'Not found' });
+  if (comment.userId !== userId) return res.status(403).json({ error: 'Not allowed' });
+  comment.content = String(content).slice(0, 1000);
+  comment.editedAt = new Date().toISOString();
+  writeDB(db);
+  res.json(comment);
+});
+app.delete('/api/comments/:id', (req, res) => {
+  const userId = req.body?.userId || req.query?.userId;
+  const db = readDB();
+  const all = db.comments || [];
+  const target = all.find(c => c.id === req.params.id);
+  if (!target) return res.status(404).json({ error: 'Not found' });
+  if (target.userId !== userId) return res.status(403).json({ error: 'Not allowed' });
+  const remove = new Set([target.id]);
+  let changed = true;
+  while (changed) { // remove descendant replies
+    changed = false;
+    for (const c of all) if (!remove.has(c.id) && remove.has(c.parentId)) { remove.add(c.id); changed = true; }
+  }
+  db.comments = all.filter(c => !remove.has(c.id));
+  writeDB(db);
+  res.json({ ok: true, removed: remove.size });
+});
+
 app.post('/api/comments/:id/react', (req, res) => {
   const { userId, reaction } = req.body || {};
   const allowed = new Set(['like','love','haha','wow','sad','angry']);
