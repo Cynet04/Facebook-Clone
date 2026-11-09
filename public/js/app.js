@@ -60,19 +60,92 @@
     if (s < 60) return 'Just now'; const m = Math.floor(s/60); if (m<60) return `${m}m`; const h=Math.floor(m/60); if (h<24) return `${h}h`; const days=Math.floor(h/24); return `${days}d`;
   };
 
+  // SVG Icons
+  const ICONS = {
+    like: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+    love: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+    haha: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+    wow: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v1"/><path d="M12 9v1"/></svg>',
+    sad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 16s1.5-2 4-2 4 2 4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+    angry: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M12 8v4"/></svg>',
+    comment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    save: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+    saved: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+    report: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    refresh: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+    messenger: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    notifications: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    home: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/></svg>',
+    users: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>',
+    store: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>',
+    edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+    delete: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    pin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v5a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 0 2-2V8a2 2 0 0 0-1-1.73z"/></svg>',
+    share: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>',
+    video: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+    photo: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    gift: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg>',
+    file: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    controller: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="6" y1="9" x2="6.01" y2="9"/><line x1="18" y1="9" x2="18.01" y2="9"/></svg>',
+    briefcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+    flask: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.31"/><path d="M14 2v7.31"/><path d="M10 9.31a6 6 0 1 0 4 0"/><path d="M6 14H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>',
+    cloud: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>',
+    sun: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+    moon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+    search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+    person: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    phone: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    mic: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+    edit2: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
+    archive: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/></svg>',
+    eye: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    globe: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    shield: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    target: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+    clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+    x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    chart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>',
+    trending: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+    down: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>',
+    up: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>',
+    play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+    pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',
+    stop: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>',
+    repeat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+    shuffle: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/></svg>',
+    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    minus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    send: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+    menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
+    bell: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    avatar: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21c0-3.07-1.64-5.64-4.5-6.32V21"/><path d="M4 21c0-3.07 1.64-5.64 4.5-6.32V21"/></svg>',
+    users2: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  };
+
   function applyTheme() {
     document.documentElement.dataset.theme = state.theme === 'dark' ? 'dark' : 'light';
     localStorage.setItem('fb_theme', state.theme);
     const btn = $('#themeBtn');
-    if (btn) btn.textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    if (btn) {
+      btn.innerHTML = state.theme === 'dark'
+        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+        : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    }
     const menuBtn = $('#themeMenuBtn');
     if (menuBtn) menuBtn.textContent = state.theme === 'dark' ? 'Light Mode' : 'Dark Mode';
   }
   function toggleTheme() { state.theme = state.theme === 'dark' ? 'light' : 'dark'; applyTheme(); }
 
+  // Configurable API base URL for deployment
+  const API_BASE = (window.__FB_API_BASE__ || '').replace(/\/$/, '') || '';
+
   async function api(path, opts = {}) {
     try {
-      const res = await fetch(path, { headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
+      const url = `${API_BASE}${path}`;
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json', ...(opts.headers||{}) }, ...opts });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Request failed');
       state.lastError = '';
@@ -171,7 +244,7 @@
   function visiblePosts() { const b = blockedIds(); return state.posts.filter(p => !b.has(p.userId) && !(p.sharedFrom && b.has(p.sharedFrom.userId))); }
 
   function reactionMeta(key) {
-    return ({ like:['👍','Like','liked'], love:['❤️','Love','loved'], haha:['😆','Haha','reacted-haha'], wow:['😮','Wow','reacted-wow'], sad:['😢','Sad','reacted-sad'], angry:['😠','Angry','reacted-angry'] })[key] || ['👍','Like','liked'];
+    return ({ like:[ICONS.like,'Like','liked'], love:[ICONS.love,'Love','loved'], haha:[ICONS.haha,'Haha','reacted-haha'], wow:[ICONS.wow,'Wow','reacted-wow'], sad:[ICONS.sad,'Sad','reacted-sad'], angry:[ICONS.angry,'Angry','reacted-angry'] })[key] || [ICONS.like,'Like','liked'];
   }
   function reactionSummary(post) {
     const counts = {};
@@ -192,7 +265,7 @@
     const total = Object.values(counts).reduce((a,b)=>a+b,0) || (c.likes||[]).length;
     if (!total) return '';
     const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
-    return `${top ? reactionMeta(top[0])[0] : '👍'} ${total}`;
+    return `${top ? reactionMeta(top[0])[0] : ICONS.like} ${total}`;
   }
   function renderComment(c, postId, depth=0) {
     const my = c.reactions?.[state.user?.id];
@@ -238,15 +311,15 @@
         <div class="post-stats"><span>${esc(reactionSummary(p))}</span><span>${comments.length} comments · ${p.shares||0} shares</span></div>
         <div class="post-actions">
           <div class="react-wrap">
-            <button data-react="${esc(p.id)}" data-reaction="${myReaction || 'like'}" class="react-main ${myReaction ? cls : ''}">${myReaction ? icon : '👍'} ${myReaction ? label : 'Like'}</button>
+            <button data-react="${esc(p.id)}" data-reaction="${myReaction || 'like'}" class="react-main ${myReaction ? cls : ''}">${myReaction ? icon : ICONS.like} ${myReaction ? label : 'Like'}</button>
             <div class="react-picker">
               ${['like','love','haha','wow','sad','angry'].map(r=>`<button data-react="${esc(p.id)}" data-reaction="${r}" title="${reactionMeta(r)[1]}">${reactionMeta(r)[0]}</button>`).join('')}
             </div>
           </div>
-          <button data-focus-comment="${esc(p.id)}">💬 Comment</button>
-          <button data-share-post="${esc(p.id)}">↗️ Share</button>
-          <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?'🔖 Saved':'🔖 Save'}</button>
-          <button data-report-post="${esc(p.id)}">🚩 Report</button>
+          <button data-focus-comment="${esc(p.id)}">${ICONS.comment} Comment</button>
+          <button data-share-post="${esc(p.id)}">${ICONS.share} Share</button>
+          <button data-save-post="${esc(p.id)}" class="${saved?'saved':''}">${saved?ICONS.saved+' Saved':ICONS.save+' Save'}</button>
+          <button data-report-post="${esc(p.id)}">${ICONS.report} Report</button>
         </div>
         <div class="comments">
           ${commentTree(comments).map(c => renderComment(c, p.id)).join('')}
@@ -593,8 +666,8 @@
             const isMe = m.fromId === state.user.id;
             return `<div class="bubble ${isMe?'me':'them'}" data-msg-id="${esc(m.id)}">${replyHtml}${esc(m.content)}${editedHtml}${reactionHtml}${isMe ? `<div class="row gap" style="margin-top:4px;font-size:11px"><button class="btn small" data-msg-edit="${esc(m.id)}">Edit</button><button class="btn small" data-msg-delete="${esc(m.id)}">Delete</button></div>` : ''}</div>`;
           }).join('') || '<div class="muted">No messages yet.</div>'}</div>
-          <form class="thread-send" data-send-chat="${esc(active)}"><input name="content" placeholder="Write a message..." autocomplete="off" /><button class="btn primary small" type="submit">Send</button><button type="button" class="btn small" data-voice-message="${esc(active)}">🎤</button><button type="button" class="btn small" data-video-call="${esc(active)}">📹</button></form>
-          <div class="reaction-picker" style="display:none;margin-top:8px">${['👍','❤️','😂','😮','😢','😡'].map(r=>`<button class="btn small" data-react-emoji="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+          <form class="thread-send" data-send-chat="${esc(active)}"><input name="content" placeholder="Write a message..." autocomplete="off" /><button class="btn primary small" type="submit">Send</button><button type="button" class="btn small" data-voice-message="${esc(active)}">${ICONS.mic}</button><button type="button" class="btn small" data-video-call="${esc(active)}">${ICONS.video}</button></form>
+          <div class="reaction-picker" style="display:none;margin-top:8px">${['like','love','haha','wow','sad','angry'].map(r=>`<button class="btn small" data-react-emoji="${esc(r)}">${ICONS[r]}</button>`).join('')}</div>
         </div>
       </div>`;
   }
@@ -626,12 +699,12 @@
           const liked = (r.likes||[]).includes(state.user?.id);
           const saved = (r.saves||[]).includes(state.user?.id);
           const hashtagsHtml = (r.hashtags||[]).map(h=>`<span class="hashtag">#${esc(h)}</span>`).join(' ');
-          return `<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)} · ${esc(r.category||'General')} · ${hashtagsHtml}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000" data-reel-view="${esc(r.id)}"></video><div class="row gap" style="margin-top:8px"><button class="btn small ${liked?'':'primary'}" data-reel-like="${esc(r.id)}">👍 ${(r.likes||[]).length}</button><button class="btn small" data-reel-comment="${esc(r.id)}">💬 ${(r.comments||[]).length}</button><button class="btn small" data-reel-share="${esc(r.id)}">↗ ${r.shares||0}</button><button class="btn small ${saved?'primary':''}" data-reel-save="${esc(r.id)}">${saved?'Saved':'Save'}</button><button class="btn small" data-reel-insights="${esc(r.id)}">Insights</button></div></div>`;
+          return `<div class="card reel-card"><div class="muted">${esc(userById(r.creatorUserId).name)} · ${esc(r.category||'General')} · ${hashtagsHtml}</div><div><strong>${esc(r.caption||'Reel')}</strong></div><video controls preload="metadata" src="${esc(r.url||'')}" style="width:100%;max-height:420px;border-radius:8px;background:#000" data-reel-view="${esc(r.id)}"></video><div class="row gap" style="margin-top:8px"><button class="btn small ${liked?'':'primary'}" data-reel-like="${esc(r.id)}">${ICONS.like} ${(r.likes||[]).length}</button><button class="btn small" data-reel-comment="${esc(r.id)}">${ICONS.comment} ${(r.comments||[]).length}</button><button class="btn small" data-reel-share="${esc(r.id)}">${ICONS.share} ${r.shares||0}</button><button class="btn small ${saved?'primary':''}" data-reel-save="${esc(r.id)}">${saved?'Saved':'Save'}</button><button class="btn small" data-reel-insights="${esc(r.id)}">Insights</button></div></div>`;
         }).join('') : '<div class="card muted">No reels yet.</div>'}
       </div>`;
   }
   function renderGaming() {
-    $('#gamingView').innerHTML = `<div class="card"><h2>Gaming</h2><p class="muted">Instant games stub (mock).</p></div>${(state.games||[]).map(g=>`<div class="card game-card"><div class="muted">${esc(userById(g.creatorUserId).name)}</div><div><strong>${esc(g.title||'Game')}</strong></div><div class="muted">${esc(g.plays||0)} plays · ${esc((g.likes||[]).length)} likes</div><iframe src="${esc(g.url||'about:blank')}" style="width:100%;height:320px;border:none;border-radius:8px;background:#000"></iframe><div class="row gap" style="margin-top:8px"><button class="btn small" data-game-like="${esc(g.id)}">👍 ${(g.likes||[]).length}</button><button class="btn small primary" data-game-play="${esc(g.id)}">Play</button></div></div>`).join('') || '<div class="card muted">No games yet.</div>'}`;
+    $('#gamingView').innerHTML = `<div class="card"><h2>Gaming</h2><p class="muted">Instant games stub (mock).</p></div>${(state.games||[]).map(g=>`<div class="card game-card"><div class="muted">${esc(userById(g.creatorUserId).name)}</div><div><strong>${esc(g.title||'Game')}</strong></div><div class="muted">${esc(g.plays||0)} plays · ${esc((g.likes||[]).length)} likes</div><iframe src="${esc(g.url||'about:blank')}" style="width:100%;height:320px;border:none;border-radius:8px;background:#000"></iframe><div class="row gap" style="margin-top:8px"><button class="btn small" data-game-like="${esc(g.id)}">${ICONS.like} ${(g.likes||[]).length}</button><button class="btn small primary" data-game-play="${esc(g.id)}">Play</button></div></div>`).join('') || '<div class="card muted">No games yet.</div>'}`;
   }
   function renderJobs() {
     $('#jobsView').innerHTML = `<div class="card"><h2>Jobs</h2><p class="muted">Job listings stub (mock).</p></div>${(state.jobs||[]).map(j=>`<div class="card job-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(j.title||'Job')}</h3><div class="muted">${esc(j.company||'Company')} · ${esc(j.location||'Location')} · ${esc(j.type||'Full-time')}</div><div><button class="btn small primary" data-job-apply="${esc(j.id)}">Apply</button><button class="btn small" data-job-save="${esc(j.id)}">${(j.savedBy||[]).includes(state.user?.id)?'Saved':'Save'}</button></div></div><div class="muted">${esc(j.salary||'')} · ${esc(j.description||'').slice(0,120)}</div><div class="muted" style="margin-top:4px">Posted by ${esc(userById(j.posterUserId).name)} · ${(j.applications||[]).length} applicants · ${(j.savedBy||[]).length} saves</div></div>`).join('') || '<div class="card muted">No jobs yet.</div>'}`;
@@ -648,7 +721,7 @@
     ${(state.ads||[]).map(a=>`<div class="card ad-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(a.name||'Campaign')}</h3><div class="muted">${esc(a.targeting||'No targeting')} · Budget: $${esc(a.budget||0)} · Status: <span class="${a.status==='active'?'success':'muted'}">${esc(a.status)}</span></div><button class="btn small" data-ad-pause="${esc(a.id)}">${a.status==='active'?'Pause':'Resume'}</button></div><div class="muted" style="margin-top:6px">Impressions: ${esc(a.impressions||0)} · Clicks: ${esc(a.clicks||0)} · Spent: $${esc(a.spent||0)}</div></div>`).join('') || '<div class="card muted">No campaigns yet.</div>'}`;
   }
   function renderScience() {
-    $('#scienceView').innerHTML = `<div class="card"><h2>Science Center</h2><p class="muted">Climate & Science articles (mock).</p></div>${(state.sciencePosts||[]).map(p=>`<div class="card science-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(p.title||'Article')}</h3><div class="muted">${esc(p.category||'General')} · By ${esc(userById(p.authorUserId).name)}</div><button class="btn small" data-science-like="${esc(p.id)}">👍 ${(p.likes||[]).length}</button></div><div>${esc(p.content||'').slice(0,200)}...</div><div class="row gap" style="margin-top:8px"><button class="btn small" data-science-share="${esc(p.id)}">Share (${p.shares||0})</button></div></div>`).join('') || '<div class="card muted">No articles yet.</div>'}`;
+    $('#scienceView').innerHTML = `<div class="card"><h2>Science Center</h2><p class="muted">Climate & Science articles (mock).</p></div>${(state.sciencePosts||[]).map(p=>`<div class="card science-card"><div class="row" style="justify-content:space-between"><div><h3>${esc(p.title||'Article')}</h3><div class="muted">${esc(p.category||'General')} · By ${esc(userById(p.authorUserId).name)}</div><button class="btn small" data-science-like="${esc(p.id)}">${ICONS.like} ${(p.likes||[]).length}</button></div><div>${esc(p.content||'').slice(0,200)}...</div><div class="row gap" style="margin-top:8px"><button class="btn small" data-science-share="${esc(p.id)}">Share (${p.shares||0})</button></div></div>`).join('') || '<div class="card muted">No articles yet.</div>'}`;
   }
   function renderWeather() {
     const active = (state.weatherAlerts||[]).filter(a => !a.dismissedBy?.includes(state.user?.id) && new Date(a.expiresAt) > new Date());
@@ -717,7 +790,7 @@
       </div>`;
   }
   function renderWatch() {
-    $('#watchView').innerHTML = `<div class="card"><h2>Watch</h2><p class="muted">Videos stub (mock player/cards)</p></div>${(state.videos||[]).map(v=>`<div class="card video-card"><div class="muted">${esc(v.channel||'Channel')} · ${esc(String(v.views||0))} views</div><h3>${esc(v.title||'Video')}</h3><video controls preload="metadata" src="${esc(v.url||'')}" style="width:100%;max-height:360px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-watch-like="${esc(v.id)}">👍 ${(v.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No videos.</div>'}`;
+    $('#watchView').innerHTML = `<div class="card"><h2>Watch</h2><p class="muted">Videos stub (mock player/cards)</p></div>${(state.videos||[]).map(v=>`<div class="card video-card"><div class="muted">${esc(v.channel||'Channel')} · ${esc(String(v.views||0))} views</div><h3>${esc(v.title||'Video')}</h3><video controls preload="metadata" src="${esc(v.url||'')}" style="width:100%;max-height:360px;border-radius:8px;background:#000"></video><div class="row gap" style="margin-top:8px"><button class="btn small" data-watch-like="${esc(v.id)}">${ICONS.like} ${(v.likes||[]).length}</button></div></div>`).join('') || '<div class="card muted">No videos.</div>'}`;
   }
   function renderMarketplace() {
     const el = $('#marketplaceList');
@@ -831,6 +904,22 @@
   }
 
   async function loadUsers() { state.users = await api('/api/users'); renderContactsInto('#contactsList'); }
+  async function loadPosts(reset = false) {
+    if (reset) { state.posts = []; state.postsTotal = 0; state.postsOffset = 0; }
+    const offset = state.postsOffset || 0;
+    const limit = 10;
+    const response = await api(`/api/posts?offset=${offset}&limit=${limit}`).catch(()=>({ items: [], total: 0 }));
+    const newPosts = response.items || response || [];
+    const total = response.total || newPosts.length;
+    if (newPosts && newPosts.length > 0) {
+      state.posts = reset ? newPosts : [...state.posts, ...newPosts];
+      state.postsTotal = total;
+      state.postsOffset = offset + newPosts.length;
+    }
+    if (reset || state.posts.length === 0) {
+      await loadCommentsForPosts();
+    }
+  }
   async function loadCommentsForPosts() {
     state.commentsByPost = {};
     const targetIds = new Set(visiblePosts().slice(0, 15).map(p => p.id));

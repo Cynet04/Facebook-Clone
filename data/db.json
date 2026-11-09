@@ -11,16 +11,646 @@
       "friendRequests": [],
       "createdAt": "2026-11-09T00:00:00.000Z",
       "birthday": "1998-11-09"
+    },
+    {
+      "id": "u2",
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "password": "password",
+      "avatar": "",
+      "cover": "",
+      "friends": [
+        "u1"
+      ],
+      "friendRequests": [
+        "u1"
+      ],
+      "createdAt": "2026-11-08T00:00:00.000Z",
+      "birthday": "1995-03-15"
+    },
+    {
+      "id": "u3",
+      "name": "Bob Smith",
+      "email": "bob@example.com",
+      "password": "password",
+      "avatar": "",
+      "cover": "",
+      "friends": [
+        "u1"
+      ],
+      "friendRequests": [
+        "u1"
+      ],
+      "createdAt": "2026-11-07T00:00:00.000Z",
+      "birthday": "1992-07-22"
+    },
+    {
+      "id": "u4",
+      "name": "Carol Davis",
+      "email": "carol@example.com",
+      "password": "password",
+      "avatar": "",
+      "cover": "",
+      "friends": [
+        "u1"
+      ],
+      "friendRequests": [
+        "u1"
+      ],
+      "createdAt": "2026-11-06T00:00:00.000Z",
+      "birthday": "1990-11-30"
     }
   ],
-  "posts": [],
+  "posts": [
+    {
+      "id": "p1",
+      "userId": "u1",
+      "content": "Just launched this Facebook Clone! 🚀 Built with Node.js, Express, and vanilla JS. Features: posts, stories, reels, groups, marketplace, messenger, and more. #FacebookClone #FullStack #WebDev",
+      "createdAt": "2026-11-09T12:00:00.000Z",
+      "likes": [],
+      "reactions": {},
+      "shares": 0,
+      "comments": [],
+      "media": [],
+      "pinned": false,
+      "highlighted": false
+    },
+    {
+      "id": "p2",
+      "userId": "u2",
+      "content": "Morning coffee ☕ and coding session. Working on some React components today. Who else codes better with caffeine?",
+      "createdAt": "2026-11-09T11:30:00.000Z",
+      "likes": [
+        "u1"
+      ],
+      "reactions": {},
+      "shares": 0,
+      "comments": [
+        {
+          "id": "c1",
+          "postId": "p2",
+          "userId": "u1",
+          "content": "Always! Coffee is life for developers 😄",
+          "createdAt": "2026-11-09T11:35:00.000Z",
+          "likes": [],
+          "reactions": {}
+        }
+      ],
+      "media": [],
+      "pinned": false,
+      "highlighted": false
+    },
+    {
+      "id": "p3",
+      "userId": "u3",
+      "content": "Just finished a 5k run! 🏃‍♂️ Feeling great. Fitness tracking is so motivating when you can see progress over time. #Fitness #Running #Health",
+      "createdAt": "2026-11-09T10:00:00.000Z",
+      "likes": [
+        "u1",
+        "u2"
+      ],
+      "reactions": {},
+      "shares": 1,
+      "comments": [],
+      "media": [],
+      "pinned": false,
+      "highlighted": false
+    },
+    {
+      "id": "p4",
+      "userId": "u4",
+      "content": "Book recommendation: \"Atomic Habits\" by James Clear. Life-changing read for building better habits. Small changes, remarkable results. 📚",
+      "createdAt": "2026-11-09T09:15:00.000Z",
+      "likes": [
+        "u1",
+        "u2",
+        "u3"
+      ],
+      "reactions": {},
+      "shares": 2,
+      "comments": [
+        {
+          "id": "c2",
+          "postId": "p4",
+          "userId": "u2",
+          "content": "One of my favorites! The 1% better every day concept is powerful.",
+          "createdAt": "2026-11-09T09:20:00.000Z",
+          "likes": [
+            "u1"
+          ],
+          "reactions": {}
+        },
+        {
+          "id": "c3",
+          "postId": "p4",
+          "userId": "u3",
+          "content": "Added to my reading list! Thanks for sharing.",
+          "createdAt": "2026-11-09T09:25:00.000Z",
+          "likes": [],
+          "reactions": {}
+        }
+      ],
+      "media": [],
+      "pinned": false,
+      "highlighted": false
+    },
+    {
+      "id": "p5",
+      "userId": "u1",
+      "content": "Testing the poll feature! What's your favorite programming language?",
+      "createdAt": "2026-11-09T08:00:00.000Z",
+      "likes": [],
+      "reactions": {},
+      "shares": 0,
+      "comments": [],
+      "media": [],
+      "pinned": false,
+      "highlighted": false,
+      "poll": {
+        "id": "poll1",
+        "question": "What's your favorite programming language?",
+        "options": [
+          {
+            "id": "opt1",
+            "text": "JavaScript/TypeScript",
+            "votes": [
+              "u2"
+            ]
+          },
+          {
+            "id": "opt2",
+            "text": "Python",
+            "votes": [
+              "u3"
+            ]
+          },
+          {
+            "id": "opt3",
+            "text": "Rust",
+            "votes": []
+          },
+          {
+            "id": "opt4",
+            "text": "Go",
+            "votes": [
+              "u1"
+            ]
+          }
+        ],
+        "expiresAt": null
+      }
+    }
+  ],
   "comments": [],
-  "messages": [],
-  "conversations": [],
-  "groups": [],
-  "notifications": [],
-  "stories": [],
-  "marketplace": [],
+  "messages": [
+    {
+      "id": "m1",
+      "fromId": "u2",
+      "toId": "u1",
+      "content": "Hey! Saw your post about the Facebook Clone. Looks awesome! 🚀",
+      "type": "text",
+      "createdAt": "2026-11-09T12:10:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m2",
+      "fromId": "u1",
+      "toId": "u2",
+      "content": "Thanks Alice! Been working on it for a while. Let me know if you want to contribute!",
+      "type": "text",
+      "createdAt": "2026-11-09T12:12:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m3",
+      "fromId": "u3",
+      "toId": "u1",
+      "content": "Morning run was great today. 5k in 25 mins! 🏃‍♂️",
+      "type": "text",
+      "createdAt": "2026-11-09T10:15:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m4",
+      "fromId": "u1",
+      "toId": "u3",
+      "content": "Nice pace! You're getting faster. 💪",
+      "type": "text",
+      "createdAt": "2026-11-09T10:20:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m5",
+      "fromId": "u4",
+      "toId": "u1",
+      "content": "Just finished Atomic Habits. Life changing book!",
+      "type": "text",
+      "createdAt": "2026-11-09T11:00:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m6",
+      "fromId": "u1",
+      "toId": "u4",
+      "content": "Right? The 1% better concept is so powerful. What's next on your reading list?",
+      "type": "text",
+      "createdAt": "2026-11-09T11:05:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m7",
+      "fromId": "u2",
+      "toId": "u3",
+      "content": "Want to join our running group this Saturday? We're meeting at 7am.",
+      "type": "text",
+      "createdAt": "2026-11-09T14:00:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m8",
+      "fromId": "u3",
+      "toId": "u2",
+      "content": "Sounds good! What's the route?",
+      "type": "text",
+      "createdAt": "2026-11-09T14:05:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m9",
+      "fromId": "u2",
+      "toId": "u3",
+      "content": "Central Park loop, about 5 miles. Pace is relaxed.",
+      "type": "text",
+      "createdAt": "2026-11-09T14:10:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m10",
+      "fromId": "u4",
+      "toId": "u2",
+      "content": "Thanks for the book rec! Just ordered it.",
+      "type": "text",
+      "createdAt": "2026-11-09T09:30:00.000Z",
+      "reactions": {}
+    },
+    {
+      "id": "m_mw9i6a2v_hygnfq",
+      "fromId": "u1",
+      "toId": "u2",
+      "content": "hu",
+      "type": "text",
+      "replyTo": null,
+      "voiceDuration": null,
+      "reactions": {},
+      "editedAt": null,
+      "deletedAt": null,
+      "createdAt": "2026-11-09T16:56:06.535Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "conv1",
+      "participants": [
+        "u1",
+        "u2"
+      ],
+      "lastMessageAt": "2026-11-09T12:12:00.000Z"
+    },
+    {
+      "id": "conv2",
+      "participants": [
+        "u1",
+        "u3"
+      ],
+      "lastMessageAt": "2026-11-09T10:20:00.000Z"
+    },
+    {
+      "id": "conv3",
+      "participants": [
+        "u1",
+        "u4"
+      ],
+      "lastMessageAt": "2026-11-09T11:05:00.000Z"
+    },
+    {
+      "id": "conv4",
+      "participants": [
+        "u2",
+        "u3"
+      ],
+      "lastMessageAt": "2026-11-09T14:10:00.000Z"
+    },
+    {
+      "id": "conv5",
+      "participants": [
+        "u2",
+        "u4"
+      ],
+      "lastMessageAt": "2026-11-09T09:30:00.000Z"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1",
+      "name": "Web Developers Community",
+      "ownerId": "u1",
+      "category": "Technology",
+      "description": "A place for web developers to share knowledge, ask questions, and showcase projects.",
+      "rules": "Be respectful. No spam. Share quality content.",
+      "members": [
+        {
+          "id": "u1",
+          "role": "admin",
+          "joinedAt": "2026-11-09T10:00:00.000Z"
+        },
+        {
+          "id": "u2",
+          "role": "moderator",
+          "joinedAt": "2026-11-09T10:05:00.000Z"
+        },
+        {
+          "id": "u3",
+          "role": "member",
+          "joinedAt": "2026-11-09T10:10:00.000Z"
+        },
+        {
+          "id": "u4",
+          "role": "member",
+          "joinedAt": "2026-11-09T10:15:00.000Z"
+        }
+      ],
+      "tags": [
+        "webdev",
+        "javascript",
+        "react",
+        "nodejs"
+      ],
+      "events": [],
+      "posts": [],
+      "polls": [],
+      "announcements": [],
+      "createdAt": "2026-11-09T10:00:00.000Z"
+    },
+    {
+      "id": "g2",
+      "name": "Fitness Enthusiasts",
+      "ownerId": "u3",
+      "category": "Health & Fitness",
+      "description": "Share workouts, progress, tips, and motivation!",
+      "rules": "Supportive community only. No body shaming.",
+      "members": [
+        {
+          "id": "u3",
+          "role": "admin",
+          "joinedAt": "2026-11-09T09:00:00.000Z"
+        },
+        {
+          "id": "u1",
+          "role": "member",
+          "joinedAt": "2026-11-09T09:05:00.000Z"
+        },
+        {
+          "id": "u4",
+          "role": "member",
+          "joinedAt": "2026-11-09T09:10:00.000Z"
+        }
+      ],
+      "tags": [
+        "fitness",
+        "running",
+        "gym",
+        "health"
+      ],
+      "events": [],
+      "posts": [],
+      "polls": [],
+      "announcements": [],
+      "createdAt": "2026-11-09T09:00:00.000Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n_mw9dctfl_uffsfn",
+      "userId": "u2",
+      "type": "friend_request",
+      "actorId": "u1",
+      "read": false,
+      "createdAt": "2026-11-09T14:41:13.473Z"
+    },
+    {
+      "id": "n_mw9dcyzn_juh7eq",
+      "userId": "u3",
+      "type": "friend_request",
+      "actorId": "u1",
+      "read": false,
+      "createdAt": "2026-11-09T14:41:20.675Z"
+    },
+    {
+      "id": "n_mw9dd1fd_ucahgi",
+      "userId": "u4",
+      "type": "friend_request",
+      "actorId": "u1",
+      "read": false,
+      "createdAt": "2026-11-09T14:41:23.833Z"
+    },
+    {
+      "id": "n_mw9i6a2v_n5ropf",
+      "userId": "u2",
+      "type": "message",
+      "actorId": "u1",
+      "read": false,
+      "createdAt": "2026-11-09T16:56:06.535Z"
+    }
+  ],
+  "stories": [
+    {
+      "id": "s1",
+      "userId": "u1",
+      "text": "Working on the new groups feature! 🎉",
+      "bg": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      "status": "published",
+      "createdAt": "2026-11-09T12:30:00.000Z",
+      "expiresAt": "2026-11-10T12:30:00.000Z",
+      "views": [
+        "u2",
+        "u3"
+      ],
+      "reactions": {}
+    },
+    {
+      "id": "s2",
+      "userId": "u2",
+      "text": "Beautiful sunrise this morning 🌅",
+      "bg": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      "status": "published",
+      "createdAt": "2026-11-09T06:00:00.000Z",
+      "expiresAt": "2026-11-10T06:00:00.000Z",
+      "views": [
+        "u1",
+        "u4"
+      ],
+      "reactions": {}
+    },
+    {
+      "id": "s3",
+      "userId": "u3",
+      "text": "Post-run endorphins! 🏃‍♂️💪",
+      "bg": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      "status": "published",
+      "createdAt": "2026-11-09T10:30:00.000Z",
+      "expiresAt": "2026-11-10T10:30:00.000Z",
+      "views": [
+        "u1",
+        "u2"
+      ],
+      "reactions": {}
+    },
+    {
+      "id": "s4",
+      "userId": "u4",
+      "text": "New book arrived! Can't wait to read 📖",
+      "bg": "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      "status": "published",
+      "createdAt": "2026-11-09T09:00:00.000Z",
+      "expiresAt": "2026-11-10T09:00:00.000Z",
+      "views": [
+        "u1"
+      ],
+      "reactions": {}
+    }
+  ],
+  "marketplace": [
+    {
+      "id": "mp1",
+      "sellerId": "u1",
+      "title": "MacBook Pro 16\" M3 Max, 64GB RAM, 2TB SSD",
+      "description": "Barely used, perfect condition. Includes original box, charger, and AppleCare+ until 2027. Space Black. Ideal for developers and creatives.",
+      "price": 3200,
+      "category": "Electronics",
+      "location": "San Francisco, CA",
+      "imageUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800",
+      "status": "available",
+      "views": 142,
+      "favorites": [
+        "u2",
+        "u3"
+      ],
+      "createdAt": "2026-11-09T13:00:00.000Z"
+    },
+    {
+      "id": "mp2",
+      "sellerId": "u2",
+      "title": "IKEA BEKANT Standing Desk (White, 63\")",
+      "description": "Electric height adjustable desk. Used for 1 year, works perfectly. Minor scratches on top surface. Selling because moving. Pickup only.",
+      "price": 280,
+      "category": "Furniture",
+      "location": "Brooklyn, NY",
+      "imageUrl": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
+      "status": "available",
+      "views": 67,
+      "favorites": [
+        "u1"
+      ],
+      "createdAt": "2026-11-09T12:30:00.000Z"
+    },
+    {
+      "id": "mp3",
+      "sellerId": "u3",
+      "title": "Nike Air Zoom Pegasus 40 - Size 10.5",
+      "description": "Worn 3 times, basically new. Great for daily training and long runs. Color: Black/White. Includes original box.",
+      "price": 85,
+      "category": "Clothing",
+      "location": "Austin, TX",
+      "imageUrl": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800",
+      "status": "available",
+      "views": 234,
+      "favorites": [
+        "u1",
+        "u2",
+        "u4"
+      ],
+      "createdAt": "2026-11-09T11:45:00.000Z"
+    },
+    {
+      "id": "mp4",
+      "sellerId": "u4",
+      "title": "Complete Harry Potter Book Set (Hardcover, 1-7)",
+      "description": "First edition hardcovers in excellent condition. Kept in smoke-free home. Beautiful collection for any Potterhead.",
+      "price": 120,
+      "category": "Books",
+      "location": "Seattle, WA",
+      "imageUrl": "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800",
+      "status": "available",
+      "views": 89,
+      "favorites": [
+        "u3"
+      ],
+      "createdAt": "2026-11-09T10:20:00.000Z"
+    },
+    {
+      "id": "mp5",
+      "sellerId": "u1",
+      "title": "Mechanical Keyboard - Keychron K8 Pro (Brown Switch)",
+      "description": "Hot-swappable, RGB backlight, wireless/Bluetooth. Used for 2 months. Includes extra keycaps and carrying case.",
+      "price": 95,
+      "category": "Electronics",
+      "location": "San Francisco, CA",
+      "imageUrl": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800",
+      "status": "available",
+      "views": 56,
+      "favorites": [],
+      "createdAt": "2026-11-09T09:00:00.000Z"
+    },
+    {
+      "id": "mp6",
+      "sellerId": "u2",
+      "title": "Vintage Leather Messenger Bag",
+      "description": "Genuine leather, develops beautiful patina. Multiple compartments, fits 15\" laptop. Strap adjustable. Classic style.",
+      "price": 180,
+      "category": "Accessories",
+      "location": "Brooklyn, NY",
+      "imageUrl": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
+      "status": "pending",
+      "views": 78,
+      "favorites": [
+        "u4"
+      ],
+      "createdAt": "2026-11-08T16:00:00.000Z"
+    },
+    {
+      "id": "mp7",
+      "sellerId": "u3",
+      "title": "Gaming Monitor - LG 27\" 144Hz 1440p IPS",
+      "description": "Excellent for gaming and work. G-Sync compatible, 1ms response. No dead pixels. Includes DisplayPort cable.",
+      "price": 299,
+      "category": "Electronics",
+      "location": "Austin, TX",
+      "imageUrl": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800",
+      "status": "available",
+      "views": 203,
+      "favorites": [
+        "u1",
+        "u2"
+      ],
+      "createdAt": "2026-11-08T14:30:00.000Z"
+    },
+    {
+      "id": "mp8",
+      "sellerId": "u4",
+      "title": "Set of 3 Mid-Century Modern Dining Chairs",
+      "description": "Walnut frame, beige fabric upholstery. Very comfortable. Minor wear on one chair leg. Sold as set only.",
+      "price": 220,
+      "category": "Furniture",
+      "location": "Seattle, WA",
+      "imageUrl": "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=800",
+      "status": "available",
+      "views": 45,
+      "favorites": [
+        "u1"
+      ],
+      "createdAt": "2026-11-08T12:00:00.000Z"
+    }
+  ],
   "reports": [],
   "events": [],
   "videos": [
@@ -83,11 +713,102 @@
   "reels": [
     {
       "id": "rl1",
-      "caption": "Mock reel demo",
+      "caption": "Mock reel demo - coding session 🎬 #coding #webdev",
       "creatorUserId": "u1",
       "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-      "likes": [],
+      "thumbnail": "",
+      "likes": [
+        "u2",
+        "u3"
+      ],
+      "shares": 1,
+      "saves": [
+        "u4"
+      ],
+      "comments": [
+        {
+          "id": "rc1",
+          "userId": "u2",
+          "content": "Nice setup! What editor is that?",
+          "createdAt": "2026-11-09T11:20:00.000Z"
+        }
+      ],
+      "views": 42,
+      "category": "Education",
+      "hashtags": [
+        "coding",
+        "webdev"
+      ],
       "createdAt": "2026-11-09T11:16:51.816Z"
+    },
+    {
+      "id": "rl2",
+      "caption": "Morning run vibes 🏃‍♀️☀️ #fitness #running #motivation",
+      "creatorUserId": "u2",
+      "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      "thumbnail": "",
+      "likes": [
+        "u1",
+        "u3",
+        "u4"
+      ],
+      "shares": 2,
+      "saves": [
+        "u1"
+      ],
+      "comments": [
+        {
+          "id": "rc2",
+          "userId": "u3",
+          "content": "Great pace! What's your route?",
+          "createdAt": "2026-11-09T06:15:00.000Z"
+        },
+        {
+          "id": "rc3",
+          "userId": "u1",
+          "content": "Beautiful morning for a run!",
+          "createdAt": "2026-11-09T06:20:00.000Z"
+        }
+      ],
+      "views": 128,
+      "category": "Fitness",
+      "hashtags": [
+        "fitness",
+        "running",
+        "motivation"
+      ],
+      "createdAt": "2026-11-09T06:10:00.000Z"
+    },
+    {
+      "id": "rl3",
+      "caption": "Book haul! 📚 So excited to read these. #books #reading #bookstagram",
+      "creatorUserId": "u4",
+      "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+      "thumbnail": "",
+      "likes": [
+        "u1",
+        "u2"
+      ],
+      "shares": 0,
+      "saves": [
+        "u3"
+      ],
+      "comments": [
+        {
+          "id": "rc4",
+          "userId": "u1",
+          "content": "Atomic Habits is amazing!",
+          "createdAt": "2026-11-09T09:30:00.000Z"
+        }
+      ],
+      "views": 87,
+      "category": "Lifestyle",
+      "hashtags": [
+        "books",
+        "reading",
+        "bookstagram"
+      ],
+      "createdAt": "2026-11-09T09:10:00.000Z"
     }
   ],
   "games": [
