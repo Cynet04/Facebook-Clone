@@ -175,9 +175,16 @@
 - [x] Expand report reasons/categories and blocked-user safeguards
 - [x] Verify and commit
 
-## Phase 27+: Infinite
-- [ ] Performance polish
+## Phase 27: Performance Polish (Mock-safe)
+- [ ] Debounce search input and avoid unnecessary renders
+- [ ] Cache DOM selectors and limit comment loading work
+- [ ] Add lightweight loading skeleton/placeholder states
+- [ ] Optimize polling/render guards for visible view only
+- [ ] Verify and commit
+
+## Phase 28+: Infinite
 - [ ] i18n stub
 - [ ] E2E test scaffold
 - [ ] Data export/import mock
+- [ ] Developer/admin diagnostics panel
 - [ ] ...continue indefinitely
