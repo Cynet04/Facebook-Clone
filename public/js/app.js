@@ -216,11 +216,16 @@
 
   function saveSettings(s) { state.settings = { ...state.settings, ...s }; localStorage.setItem('fb_settings', JSON.stringify(state.settings)); }
   function audienceLabel(v) { return ({ public:'Public', friends:'Friends', only_me:'Only me' })[v] || 'Public'; }
+  function trackEvent(type, meta = {}) {
+    if (!type) return;
+    fetch('/api/analytics/events', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type, userId: state.user?.id || null, meta }) }).catch(()=>{});
+  }
   async function renderDiagnostics() {
     const gate = !state.settings.isModerator ? ' (enable moderator flag in settings for full mock access context)' : '';
     try {
-      const d = await api('/api/admin/diagnostics');
-      $('#diagnosticsPanel').innerHTML = `<strong>Server${gate}:</strong> up ${esc(d.uptimeSec)}s · node ${esc(d.node)} · ${Object.entries(d.counts||{}).map(([k,v])=>`${k}=${v}`).join(' · ')}`;
+      const [d, a] = await Promise.all([api('/api/admin/diagnostics'), api('/api/analytics/summary').catch(()=>({total:0,byType:{}}))]);
+      const top = Object.entries(a.byType||{}).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([k,v])=>`${k}=${v}`).join(' · ') || 'none';
+      $('#diagnosticsPanel').innerHTML = `<strong>Server${gate}:</strong> up ${esc(d.uptimeSec)}s · node ${esc(d.node)} · ${Object.entries(d.counts||{}).map(([k,v])=>`${k}=${v}`).join(' · ')}<br/><strong>Events:</strong> ${esc(a.total||0)} (${esc(top)})`;
     } catch { $('#diagnosticsPanel').textContent = 'Diagnostics unavailable.'; }
     $('#clientDiagnostics').textContent = `Client: view=${state.view} · posts=${state.posts.length}/${state.postsTotal||0} · last=${state.lastUpdatedAt ? new Date(state.lastUpdatedAt).toLocaleTimeString() : 'never'} · error=${state.lastError || 'none'}`;
   }
@@ -500,6 +505,7 @@
     if (!content || !state.user) return;
     if (imageUrl && !/^https?:\/\//i.test(imageUrl)) { alert('Image URL must start with http(s)://'); return; }
     await api('/api/posts', { method: 'POST', body: JSON.stringify({ userId: state.user.id, content, imageUrl }) }).catch(e=>alert(e.message));
+    trackEvent('post_create', { hasImage: !!imageUrl });
     input.value = ''; if ($('#postImageInput')) $('#postImageInput').value = ''; await loadFeed(true);
   });
 
@@ -514,6 +520,7 @@
     if (e.key !== 'Enter') return;
     clearTimeout(state.searchTimer);
     state.searchQuery = e.target.value.trim();
+    trackEvent('search', { query: state.searchQuery.slice(0,80) });
     state.view = 'search'; renderView();
   });
 
@@ -598,6 +605,7 @@
     const reactComment = e.target.closest('[data-react-comment]');
     if (reactComment && state.user) {
       await api(`/api/comments/${reactComment.dataset.reactComment}/react`, { method:'POST', body: JSON.stringify({ userId: state.user.id, reaction: reactComment.dataset.reaction || 'like' }) }).catch(()=>{});
+      trackEvent('comment_react', { reaction: reactComment.dataset.reaction || 'like' });
       await loadFeed(); return;
     }
     const editComment = e.target.closest('[data-edit-comment]');

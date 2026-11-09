@@ -18,7 +18,7 @@ function readDB() {
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     return JSON.parse(raw);
   } catch (e) {
-    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [], reports: [] };
+    return { users: [], posts: [], comments: [], messages: [], conversations: [], groups: [], notifications: [], stories: [], marketplace: [], reports: [], events: [] };
   }
 }
 
@@ -530,6 +530,24 @@ app.post('/api/reports/:id/resolve', (req, res) => {
   report.resolvedAt = new Date().toISOString();
   writeDB(db);
   res.json(report);
+});
+
+// Analytics/events stub (Phase 32)
+app.post('/api/analytics/events', (req, res) => {
+  const { type, userId, meta } = req.body || {};
+  if (!type) return res.status(400).json({ error: 'Missing type' });
+  const db = readDB();
+  db.events = db.events || [];
+  db.events.push({ id: uid('e'), type: String(type).slice(0, 60), userId: userId || null, meta: meta && typeof meta === 'object' ? meta : {}, createdAt: new Date().toISOString() });
+  if (db.events.length > 1000) db.events = db.events.slice(-1000);
+  writeDB(db);
+  res.status(201).json({ ok: true });
+});
+app.get('/api/analytics/summary', (req, res) => {
+  const db = readDB();
+  const byType = {};
+  (db.events || []).forEach(e => { byType[e.type] = (byType[e.type]||0)+1; });
+  res.json({ total: (db.events||[]).length, byType });
 });
 
 // SPA-ish fallback for hash routing / direct loads

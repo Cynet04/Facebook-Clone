@@ -211,11 +211,11 @@
 - [x] Verify and commit
 
 ## Phase 32: Analytics / Events Stub
-- [ ] Add client event helper and log key UI actions (post, like, comment, share, search)
-- [ ] Add server endpoint to accept mock analytics events
-- [ ] Persist events in JSON DB with basic trimming/limits
-- [ ] Surface event counts in diagnostics panel
-- [ ] Verify and commit
+- [x] Add client event helper and log key UI actions (post, like, comment, share, search)
+- [x] Add server endpoint to accept mock analytics events
+- [x] Persist events in JSON DB with basic trimming/limits
+- [x] Surface event counts in diagnostics panel
+- [x] Verify and commit
 
 ## Phase 33+: Infinite
 - [ ] Scheduled posts/stories mock
