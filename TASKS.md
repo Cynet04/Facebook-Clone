@@ -210,9 +210,16 @@
 - [x] Add moderator-gated access hint (reuse settings flag)
 - [x] Verify and commit
 
-## Phase 32+: Infinite
-- [ ] Analytics/events stub
+## Phase 32: Analytics / Events Stub
+- [ ] Add client event helper and log key UI actions (post, like, comment, share, search)
+- [ ] Add server endpoint to accept mock analytics events
+- [ ] Persist events in JSON DB with basic trimming/limits
+- [ ] Surface event counts in diagnostics panel
+- [ ] Verify and commit
+
+## Phase 33+: Infinite
 - [ ] Scheduled posts/stories mock
 - [ ] Rate limiting/security hardening mock
 - [ ] Post pinning/highlights
+- [ ] Profile/about details expansion
 - [ ] ...continue indefinitely
